@@ -1,148 +1,567 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Machine Rift</title>
-    <style>
-        :root {
-            --bg: #07111f;
-            --panel: #101c31;
-            --accent: #4dd0e1;
-            --accent2: #ff8a65;
-            --text: #f5f7fb;
-            --muted: #9db0c7;
-        }
-
-        * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
-            background: linear-gradient(135deg, var(--bg), #15243e);
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-        }
-
-        .card {
-            width: min(900px, 100%);
-            background: rgba(16, 28, 49, 0.95);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 20px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.35);
-            overflow: hidden;
-        }
-
-        .hero {
-            padding: 40px;
-            display: grid;
-            gap: 20px;
-        }
-
-        .badge {
-            display: inline-block;
-            width: fit-content;
-            padding: 8px 12px;
-            border-radius: 999px;
-            background: rgba(77, 208, 225, 0.15);
-            color: var(--accent);
-            font-size: 0.9rem;
-            letter-spacing: 0.04em;
-        }
-
-        h1 {
-            margin: 0;
-            font-size: clamp(2rem, 4vw, 3rem);
-            line-height: 1.1;
-        }
-
-        p { margin: 0; color: var(--muted); line-height: 1.7; }
-
-        .actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-top: 8px;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 12px 18px;
-            border-radius: 999px;
-            text-decoration: none;
-            font-weight: 700;
-            transition: transform 0.2s ease;
-        }
-
-        .btn:hover { transform: translateY(-2px); }
-
-        .btn-primary {
-            background: linear-gradient(90deg, var(--accent), #2bb6cb);
-            color: #051018;
-        }
-
-        .btn-secondary {
-            background: rgba(255,138,101,0.16);
-            color: var(--accent2);
-            border: 1px solid rgba(255,138,101,0.2);
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 16px;
-            padding: 24px 40px 40px;
-            background: rgba(255,255,255,0.03);
-        }
-
-        .info-box {
-            padding: 16px;
-            border-radius: 14px;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.06);
-        }
-
-        .info-box h3 { margin: 0 0 8px; font-size: 1rem; }
-        .info-box span { color: var(--muted); font-size: 0.95rem; }
-
-        @media (max-width: 700px) {
-            .hero { padding: 28px; }
-            .info-grid { grid-template-columns: 1fr; padding: 20px 28px 28px; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Machine Rift</title>
+<style>
+  :root {
+    --bg: #07111f;
+    --panel: #101c31;
+    --panel2: #16233b;
+    --accent: #4dd0e1;
+    --accent2: #ff8a65;
+    --text: #f5f7fb;
+    --muted: #9db0c7;
+    --good: #4caf50;
+    --bad: #ff5252;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: linear-gradient(135deg, var(--bg), #15243e);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    width: min(760px, 100%);
+    background: rgba(16, 28, 49, 0.95);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+    padding: 32px;
+  }
+  h1 { margin: 0 0 4px; font-size: 2rem; }
+  h2 { margin: 0 0 16px; font-size: 1.3rem; color: var(--accent); }
+  p { color: var(--muted); line-height: 1.6; }
+  .badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(77, 208, 225, 0.15);
+    color: var(--accent);
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    margin-bottom: 16px;
+  }
+  input[type=text] {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: var(--panel2);
+    color: var(--text);
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    border-radius: 999px;
+    padding: 11px 22px;
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+  .btn-primary { background: linear-gradient(90deg, var(--accent), #2bb6cb); color: #051018; }
+  .btn-secondary { background: rgba(255,255,255,0.08); color: var(--text); }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+  .error-text { color: var(--bad); min-height: 20px; font-size: 0.9rem; }
+  .stage-list, .rank-list { display: grid; gap: 10px; margin-bottom: 16px; }
+  .stage-card {
+    background: var(--panel2);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 14px 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: border-color 0.2s;
+  }
+  .stage-card:hover { border-color: var(--accent); }
+  .stage-card .name { font-weight: 700; }
+  .stage-card .meta { color: var(--muted); font-size: 0.85rem; }
+  .rank-row {
+    display: flex;
+    justify-content: space-between;
+    background: var(--panel2);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+  }
+  .rank-row .rank-name { color: var(--text); }
+  .rank-row .rank-score { color: var(--accent); font-weight: 700; }
+  #hud {
+    display: flex;
+    gap: 22px;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+  }
+  #hud span b { color: var(--accent); }
+  #hud .hp-low b { color: var(--bad); }
+  #gameCanvas {
+    display: block;
+    width: 100%;
+    max-width: 700px;
+    background: #0c1930;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    cursor: crosshair;
+  }
+  #towerPanel { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+  .tower-btn {
+    background: var(--panel2);
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    color: var(--text);
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 0.85rem;
+    min-width: 110px;
+  }
+  .tower-btn b { display: block; font-size: 0.95rem; margin-bottom: 2px; }
+  .tower-btn.selected { border-color: var(--accent); background: rgba(77,208,225,0.12); }
+  .tower-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .hint { font-size: 0.85rem; color: var(--muted); margin-top: 10px; min-height: 18px; }
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(5,10,20,0.75);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 20;
+  }
+  .overlay .card { text-align: center; }
+  .result-win { color: var(--good); }
+  .result-lose { color: var(--bad); }
+  [hidden] { display: none !important; }
+</style>
 </head>
 <body>
-    <main class="card">
-        <section class="hero">
-            <span class="badge">Machine Rift · MVP</span>
-            <h1>塔防遊戲後端與前端入口已就緒</h1>
-            <p>
-                這是一個以 Spring Boot 提供 API、前端入口頁作為啟動畫面的 MVP 版本。
-                你可以先用它確認後端服務已正常啟動，再逐步補上遊戲畫面與前後端串接。
-            </p>
-            <div class="actions">
-                <a class="btn btn-primary" href="/swagger-ui.html">查看 API 文件</a>
-                <a class="btn btn-secondary" href="/api/players">測試玩家 API</a>
-            </div>
-        </section>
 
-        <section class="info-grid">
-            <div class="info-box">
-                <h3>後端服務</h3>
-                <span>Spring Boot 3 + MySQL + JPA</span>
-            </div>
-            <div class="info-box">
-                <h3>資料模型</h3>
-                <span>玩家、關卡、塔、防禦戰績</span>
-            </div>
-            <div class="info-box">
-                <h3>下一步</h3>
-                <span>接上 Canvas 遊戲畫面與 REST API</span>
-            </div>
-        </section>
-    </main>
+<div id="screen-start" class="card">
+  <span class="badge">Machine Rift · Demo</span>
+  <h1>Machine Rift</h1>
+  <p>塔防遊戲最小可玩切片。輸入玩家名稱以連線後端 API 開始遊戲。</p>
+  <br>
+  <input type="text" id="playerNameInput" placeholder="輸入玩家名稱" maxlength="100">
+  <div class="btn-row">
+    <button class="btn-primary" id="btnStart">開始</button>
+    <button class="btn-secondary" id="btnShowRanking">查看排行榜</button>
+  </div>
+  <div class="error-text" id="startError"></div>
+</div>
+
+<div id="screen-stages" class="card" hidden>
+  <h2>選擇關卡</h2>
+  <div class="stage-list" id="stageList"></div>
+  <div class="btn-row">
+    <button class="btn-secondary" id="btnBackToStart">返回</button>
+  </div>
+</div>
+
+<div id="screen-ranking" class="card" hidden>
+  <h2>排行榜</h2>
+  <div class="rank-list" id="rankList"></div>
+  <div class="btn-row">
+    <button class="btn-secondary" id="btnBackFromRanking">返回</button>
+  </div>
+</div>
+
+<div id="screen-game" class="card" hidden style="width:min(760px,100%)">
+  <div id="hud">
+    <span>金幣 <b id="hudGold">0</b></span>
+    <span id="hudHpWrap">基地血量 <b id="hudHp">0</b></span>
+    <span>分數 <b id="hudScore">0</b></span>
+    <span>敵人 <b id="hudEnemies">0/0</b></span>
+  </div>
+  <canvas id="gameCanvas" width="700" height="400"></canvas>
+  <div id="towerPanel"></div>
+  <div class="btn-row">
+    <button class="btn-primary" id="btnStartWave">開始波次</button>
+    <button class="btn-secondary" id="btnQuitGame">放棄本局</button>
+  </div>
+  <div class="hint" id="gameHint">點選塔種後，點選地圖上非路徑格子建造。</div>
+</div>
+
+<div id="overlay-result" class="overlay" hidden>
+  <div class="card">
+    <h1 id="resultTitle"></h1>
+    <p id="resultDetail"></p>
+    <div class="btn-row" style="justify-content:center">
+      <button class="btn-primary" id="btnPlayAgain">返回關卡選擇</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const screens = {
+  start: document.getElementById('screen-start'),
+  stages: document.getElementById('screen-stages'),
+  ranking: document.getElementById('screen-ranking'),
+  game: document.getElementById('screen-game'),
+};
+function showScreen(name) {
+  Object.values(screens).forEach(s => s.hidden = true);
+  screens[name].hidden = false;
+}
+
+async function api(method, path, body) {
+  const res = await fetch(path, {
+    method,
+    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const json = await res.json();
+  if (!json.success) throw new Error(json.message || 'API 發生錯誤');
+  return json.data;
+}
+
+const state = {
+  playerId: null,
+  playerName: '',
+  stages: [],
+  towers: [],
+  players: [],
+  selectedStage: null,
+};
+
+// ---------- Start screen ----------
+document.getElementById('btnStart').addEventListener('click', async () => {
+  const name = document.getElementById('playerNameInput').value.trim();
+  const errEl = document.getElementById('startError');
+  errEl.textContent = '';
+  if (!name) { errEl.textContent = '請輸入玩家名稱'; return; }
+  try {
+    const player = await api('POST', '/api/players', { playerName: name, level: 1 });
+    state.playerId = player.playerId;
+    state.playerName = player.playerName;
+    const [stages, towers] = await Promise.all([
+      api('GET', '/api/stages'),
+      api('GET', '/api/towers'),
+    ]);
+    state.stages = stages;
+    state.towers = towers;
+    renderStageList();
+    showScreen('stages');
+  } catch (e) {
+    errEl.textContent = '連線後端失敗：' + e.message + '（請確認服務已啟動）';
+  }
+});
+
+document.getElementById('btnShowRanking').addEventListener('click', async () => {
+  await openRanking();
+});
+document.getElementById('btnBackFromRanking').addEventListener('click', () => showScreen('start'));
+document.getElementById('btnBackToStart').addEventListener('click', () => showScreen('start'));
+
+async function openRanking() {
+  const listEl = document.getElementById('rankList');
+  listEl.innerHTML = '<p>載入中...</p>';
+  showScreen('ranking');
+  try {
+    const [records, players] = await Promise.all([
+      api('GET', '/api/rankings'),
+      api('GET', '/api/players'),
+    ]);
+    const nameById = {};
+    players.forEach(p => { nameById[p.playerId] = p.playerName; });
+    if (records.length === 0) {
+      listEl.innerHTML = '<p>目前還沒有任何戰績。</p>';
+      return;
+    }
+    listEl.innerHTML = records.slice(0, 10).map((r, i) => `
+      <div class="rank-row">
+        <span class="rank-name">#${i + 1} ${nameById[r.playerId] || ('玩家 ' + r.playerId)} (${r.result})</span>
+        <span class="rank-score">${r.score} 分</span>
+      </div>
+    `).join('');
+  } catch (e) {
+    listEl.innerHTML = '<p>載入排行榜失敗：' + e.message + '</p>';
+  }
+}
+
+// ---------- Stage select ----------
+function renderStageList() {
+  const listEl = document.getElementById('stageList');
+  listEl.innerHTML = state.stages.map(s => `
+    <div class="stage-card" data-id="${s.stageId}">
+      <div>
+        <div class="name">${s.stageName}</div>
+        <div class="meta">難度：${s.difficulty} · 敵人數：${s.enemyCount} · 獎勵金幣：${s.rewardGold}</div>
+      </div>
+      <button class="btn-primary">開始</button>
+    </div>
+  `).join('');
+  listEl.querySelectorAll('.stage-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const id = Number(card.dataset.id);
+      state.selectedStage = state.stages.find(s => s.stageId === id);
+      startGame();
+    });
+  });
+}
+
+// ---------- Game constants ----------
+const CELL = 50, COLS = 14, ROWS = 8;
+const PATH_ROW = 4;
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const DIFFICULTY_HP_MUL = { Easy: 1, Normal: 1.5, Hard: 2.2 };
+const ENEMY_BASE_HP = 40;
+const ENEMY_SPEED = 55; // px per second
+const ENEMY_REWARD = 12;
+const START_GOLD = 300;
+const START_BASE_HP = 10;
+const SPAWN_INTERVAL_MS = 850;
+const PROJECTILE_SPEED = 320;
+const HIT_RADIUS = 8;
+
+let game = null;
+let rafId = null;
+
+function startGame() {
+  const stage = state.selectedStage;
+  game = {
+    gold: START_GOLD,
+    baseHp: START_BASE_HP,
+    score: 0,
+    towers: [],
+    enemies: [],
+    projectiles: [],
+    selectedTowerType: null,
+    waveActive: false,
+    spawned: 0,
+    enemyCount: stage.enemyCount,
+    hpMul: DIFFICULTY_HP_MUL[stage.difficulty] || 1.2,
+    spawnTimer: 0,
+    lastTs: null,
+    startedAt: null,
+    ended: false,
+  };
+  renderTowerPanel();
+  updateHud();
+  document.getElementById('gameHint').textContent = '點選塔種後，點選地圖上非路徑格子建造。';
+  document.getElementById('btnStartWave').disabled = false;
+  showScreen('game');
+  draw();
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = requestAnimationFrame(loop);
+}
+
+document.getElementById('btnQuitGame').addEventListener('click', () => {
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = null;
+  game = null;
+  showScreen('stages');
+});
+
+function renderTowerPanel() {
+  const panel = document.getElementById('towerPanel');
+  panel.innerHTML = state.towers.map(t => `
+    <button class="tower-btn" data-id="${t.towerId}">
+      <b>${t.towerName}</b>
+      造價 ${t.cost}G<br>傷害 ${t.damage} / 射程 ${t.attackRange}
+    </button>
+  `).join('');
+  panel.querySelectorAll('.tower-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = Number(btn.dataset.id);
+      game.selectedTowerType = game.selectedTowerType === id ? null : id;
+      panel.querySelectorAll('.tower-btn').forEach(b => {
+        b.classList.toggle('selected', Number(b.dataset.id) === game.selectedTowerType);
+      });
+    });
+  });
+}
+
+canvas.addEventListener('click', (e) => {
+  if (!game || game.ended) return;
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
+  const mx = (e.clientX - rect.left) * scaleX, my = (e.clientY - rect.top) * scaleY;
+  const col = Math.floor(mx / CELL), row = Math.floor(my / CELL);
+  if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
+  if (row === PATH_ROW) return;
+  if (!game.selectedTowerType) return;
+  if (game.towers.some(t => t.col === col && t.row === row)) return;
+  const cfg = state.towers.find(t => t.towerId === game.selectedTowerType);
+  if (!cfg || game.gold < cfg.cost) return;
+  game.gold -= cfg.cost;
+  game.towers.push({
+    col, row,
+    x: col * CELL + CELL / 2, y: row * CELL + CELL / 2,
+    damage: cfg.damage, attackSpeed: cfg.attackSpeed, range: cfg.attackRange,
+    cooldown: 0, name: cfg.towerName,
+  });
+  updateHud();
+});
+
+document.getElementById('btnStartWave').addEventListener('click', () => {
+  if (!game || game.waveActive) return;
+  game.waveActive = true;
+  game.startedAt = performance.now();
+  document.getElementById('btnStartWave').disabled = true;
+  document.getElementById('gameHint').textContent = '波次進行中...敵人抵達基地會扣血。';
+});
+
+function spawnEnemy() {
+  game.enemies.push({
+    x: -20, y: PATH_ROW * CELL + CELL / 2,
+    hp: Math.round(ENEMY_BASE_HP * game.hpMul),
+    maxHp: Math.round(ENEMY_BASE_HP * game.hpMul),
+    speed: ENEMY_SPEED,
+    alive: true,
+  });
+  game.spawned++;
+}
+
+function loop(ts) {
+  if (!game) return;
+  if (game.lastTs == null) game.lastTs = ts;
+  const dt = Math.min(50, ts - game.lastTs);
+  game.lastTs = ts;
+
+  if (game.waveActive && !game.ended) {
+    game.spawnTimer -= dt;
+    if (game.spawnTimer <= 0 && game.spawned < game.enemyCount) {
+      spawnEnemy();
+      game.spawnTimer = SPAWN_INTERVAL_MS;
+    }
+
+    game.enemies.forEach(e => {
+      if (!e.alive) return;
+      e.x += e.speed * dt / 1000;
+      if (e.x >= COLS * CELL + 20) {
+        e.alive = false;
+        game.baseHp--;
+        if (game.baseHp <= 0) endGame('LOSE');
+      }
+    });
+    game.enemies = game.enemies.filter(e => e.alive);
+
+    game.towers.forEach(t => {
+      t.cooldown -= dt;
+      if (t.cooldown > 0) return;
+      let target = null, bestX = -1;
+      game.enemies.forEach(e => {
+        const d = Math.hypot(e.x - t.x, e.y - t.y);
+        if (d <= t.range && e.x > bestX) { target = e; bestX = e.x; }
+      });
+      if (target) {
+        game.projectiles.push({ x: t.x, y: t.y, target, damage: t.damage });
+        t.cooldown = 1000 / t.attackSpeed;
+      }
+    });
+
+    game.projectiles.forEach(p => {
+      if (!p.target.alive) { p.dead = true; return; }
+      const dx = p.target.x - p.x, dy = p.target.y - p.y, d = Math.hypot(dx, dy);
+      if (d <= HIT_RADIUS) {
+        p.target.hp -= p.damage;
+        if (p.target.hp <= 0) {
+          p.target.alive = false;
+          game.gold += ENEMY_REWARD;
+          game.score += ENEMY_REWARD;
+        }
+        p.dead = true;
+      } else {
+        p.x += dx / d * PROJECTILE_SPEED * dt / 1000;
+        p.y += dy / d * PROJECTILE_SPEED * dt / 1000;
+      }
+    });
+    game.projectiles = game.projectiles.filter(p => !p.dead);
+
+    if (!game.ended && game.spawned >= game.enemyCount && game.enemies.length === 0) {
+      endGame('WIN');
+    }
+    updateHud();
+  }
+
+  draw();
+  if (!game.ended) rafId = requestAnimationFrame(loop);
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      ctx.fillStyle = r === PATH_ROW ? '#2c4468' : (( r + c) % 2 === 0 ? '#12213a' : '#0f1c32');
+      ctx.fillRect(c * CELL, r * CELL, CELL, CELL);
+    }
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  for (let c = 0; c <= COLS; c++) { ctx.beginPath(); ctx.moveTo(c * CELL, 0); ctx.lineTo(c * CELL, ROWS * CELL); ctx.stroke(); }
+  for (let r = 0; r <= ROWS; r++) { ctx.beginPath(); ctx.moveTo(0, r * CELL); ctx.lineTo(COLS * CELL, r * CELL); ctx.stroke(); }
+
+  if (game) {
+    game.towers.forEach(t => {
+      ctx.fillStyle = '#4dd0e1';
+      ctx.beginPath(); ctx.arc(t.x, t.y, 14, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(77,208,225,0.15)';
+      ctx.beginPath(); ctx.arc(t.x, t.y, t.range, 0, Math.PI * 2); ctx.stroke();
+    });
+    game.enemies.forEach(e => {
+      ctx.fillStyle = '#ff5252';
+      ctx.beginPath(); ctx.arc(e.x, e.y, 10, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.2)';
+      ctx.fillRect(e.x - 12, e.y - 18, 24, 4);
+      ctx.fillStyle = '#4caf50';
+      ctx.fillRect(e.x - 12, e.y - 18, 24 * (e.hp / e.maxHp), 4);
+    });
+    game.projectiles.forEach(p => {
+      ctx.fillStyle = '#ffe082';
+      ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); ctx.fill();
+    });
+  }
+}
+
+function updateHud() {
+  document.getElementById('hudGold').textContent = game.gold;
+  const hpEl = document.getElementById('hudHp');
+  hpEl.textContent = game.baseHp;
+  document.getElementById('hudHpWrap').classList.toggle('hp-low', game.baseHp <= 3);
+  document.getElementById('hudScore').textContent = game.score;
+  document.getElementById('hudEnemies').textContent = game.spawned + '/' + game.enemyCount;
+}
+
+async function endGame(result) {
+  if (!game || game.ended) return;
+  game.ended = true;
+  game.waveActive = false;
+  if (result === 'WIN') game.score += state.selectedStage.rewardGold;
+  const playTime = game.startedAt ? Math.round((performance.now() - game.startedAt) / 1000) : 0;
+
+  document.getElementById('resultTitle').textContent = result === 'WIN' ? '任務成功' : '任務失敗';
+  document.getElementById('resultTitle').className = result === 'WIN' ? 'result-win' : 'result-lose';
+  document.getElementById('resultDetail').textContent = `分數：${game.score}　用時：${playTime} 秒`;
+  document.getElementById('overlay-result').hidden = false;
+
+  try {
+    await api('POST', '/api/game-records', {
+      playerId: state.playerId,
+      stageId: state.selectedStage.stageId,
+      score: game.score,
+      result,
+      playTime,
+    });
+  } catch (e) {
+    document.getElementById('resultDetail').textContent += '（戰績儲存失敗：' + e.message + '）';
+  }
+}
+
+document.getElementById('btnPlayAgain').addEventListener('click', () => {
+  document.getElementById('overlay-result').hidden = true;
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = null;
+  game = null;
+  showScreen('stages');
+});
+</script>
 </body>
 </html>

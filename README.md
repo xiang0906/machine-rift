@@ -1,7 +1,9 @@
-# Machine Rift MVP 後端
+# Machine Rift MVP
 
 ## 概述
-Machine Rift 是一款塔防遊戲，這個倉庫是它的 MVP 後端服務。遊戲畫面與玩法邏輯規劃在前端進行，後端只負責玩家、關卡、塔、對戰紀錄與排行榜的資料存取。
+Machine Rift 是一款塔防遊戲。這個倉庫包含：
+- Spring Boot 後端：負責玩家、關卡、塔、對戰紀錄與排行榜的資料存取
+- 前端遊戲畫面（`src/main/resources/static/index.html`）：Canvas 繪製的最小可玩塔防切片，實際呼叫後端 API
 
 ## 技術棧
 - Java 21
@@ -47,6 +49,7 @@ DB_PASSWORD=你的本機MySQL密碼
 ```
 ./mvnw spring-boot:run
 ```
+啟動後瀏覽器開啟 `http://localhost:8080/` 即可看到遊戲畫面。
 
 ### 執行測試
 ```
@@ -109,7 +112,21 @@ Content-Type: application/json
 ## Swagger
 啟動服務後，可至 `/swagger-ui.html` 瀏覽並測試所有 API；OpenAPI 原始文件在 `/v3/api-docs`。
 
+## 前端遊戲畫面
+`src/main/resources/static/index.html` 是純前端單一 HTML 檔（Canvas + Vanilla JS），由 Spring Boot 當靜態資源伺服，實際呼叫後端 API，不使用任何前端框架或建置流程。
+
+遊玩流程：
+1. 輸入玩家名稱 → `POST /api/players` 建立玩家
+2. 選擇關卡 → `GET /api/stages` 讀取關卡清單
+3. 建塔 → `GET /api/towers` 讀取塔的造價/傷害/射程，點選塔種後點地圖空格建造
+4. 開始波次 → 依關卡 `enemyCount` 生成敵人，塔自動朝路徑最前段敵人攻擊
+5. 基地血量歸零判定失敗、殺光所有敵人判定成功 → `POST /api/game-records` 儲存戰績
+6. 可另外查看排行榜 → `GET /api/rankings` 搭配 `GET /api/players` 顯示玩家名稱
+
+**注意**：畫面依賴資料庫裡已有的 `stage` 與 `tower` 資料才能玩，全新資料庫的話請先透過 API（或 Swagger UI）建立至少一筆關卡與塔，否則選單會是空的。目前的遊戲平衡數值（起始金幣、基地血量、敵人血量/速度、難度倍率等）是寫在前端程式碼裡的常數，尚未對應到資料庫欄位。
+
 ## 專案現況
 - 後端 API 骨架與資料完整性防護已完成（玩家/關卡刪除保護、集中式例外處理）。
 - 玩家、關卡、塔皆已提供完整 CRUD。
-- 前端遊戲畫面（Canvas 渲染、遊戲邏輯）尚未開發，目前 `static/index.html` 僅為服務啟動確認頁。
+- 前端已有可玩的最小塔防切片，並實際串接後端 API（建立玩家、關卡/塔資料、儲存戰績、排行榜）。
+- 尚未做的：敵人種類/波次設計尚未資料庫化（目前寫死在前端）、塔沒有升級機制、地圖只有單一直線路徑。

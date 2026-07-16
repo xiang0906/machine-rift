@@ -76,7 +76,10 @@ Base path：`/api`
 | 關卡 | PUT | `/stages/{id}` | 更新關卡 |
 | 關卡 | DELETE | `/stages/{id}` | 刪除關卡（有戰績會被拒絕） |
 | 塔 | GET | `/towers` | 取得所有塔 |
-| 塔 | GET | `/towers/{id}` | 取得單一塔（目前僅唯讀，尚無建立/修改/刪除） |
+| 塔 | GET | `/towers/{id}` | 取得單一塔 |
+| 塔 | POST | `/towers` | 建立塔 |
+| 塔 | PUT | `/towers/{id}` | 更新塔 |
+| 塔 | DELETE | `/towers/{id}` | 刪除塔 |
 | 戰績 | POST | `/game-records` | 儲存一筆對戰紀錄 |
 | 戰績 | GET | `/game-records` | 取得所有戰績 |
 | 戰績 | GET | `/game-records/{id}` | 取得單一戰績 |
@@ -108,5 +111,5 @@ Content-Type: application/json
 
 ## 專案現況
 - 後端 API 骨架與資料完整性防護已完成（玩家/關卡刪除保護、集中式例外處理）。
+- 玩家、關卡、塔皆已提供完整 CRUD。
 - 前端遊戲畫面（Canvas 渲染、遊戲邏輯）尚未開發，目前 `static/index.html` 僅為服務啟動確認頁。
-- Tower 尚未提供新增/修改/刪除 API。 

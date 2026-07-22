@@ -17,26 +17,61 @@
     --bad: #ff5252;
   }
   * { box-sizing: border-box; }
+  @keyframes bgPan {
+    0% { background-position: 0% 0%; }
+    50% { background-position: 100% 100%; }
+    100% { background-position: 0% 0%; }
+  }
   body {
     margin: 0;
     font-family: Arial, Helvetica, sans-serif;
-    background: linear-gradient(135deg, var(--bg), #15243e);
+    background: linear-gradient(135deg, var(--bg), #15243e, #0a1830, var(--bg));
+    background-size: 300% 300%;
+    animation: bgPan 22s ease-in-out infinite;
     color: var(--text);
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
+    position: relative;
+  }
+  #bgFx {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
   }
   .card {
+    position: relative;
+    z-index: 1;
     width: min(760px, 100%);
     background: rgba(16, 28, 49, 0.95);
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 20px;
     box-shadow: 0 20px 50px rgba(0,0,0,0.35);
     padding: 32px;
+    animation: fadeInUp 0.55s ease-out;
   }
-  h1 { margin: 0 0 4px; font-size: 2rem; }
+  @keyframes titleGlow {
+    0%, 100% { text-shadow: 0 0 8px rgba(77,208,225,0.35), 0 0 22px rgba(77,208,225,0.15); }
+    50% { text-shadow: 0 0 16px rgba(77,208,225,0.65), 0 0 38px rgba(77,208,225,0.35); }
+  }
+  h1 {
+    margin: 0 0 4px;
+    font-size: 2.2rem;
+    letter-spacing: 0.03em;
+    background: linear-gradient(90deg, var(--text), var(--accent), var(--text));
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: titleGlow 3.2s ease-in-out infinite;
+  }
   h2 { margin: 0 0 16px; font-size: 1.3rem; color: var(--accent); }
   p { color: var(--muted); line-height: 1.6; }
   .badge {
@@ -48,6 +83,7 @@
     font-size: 0.85rem;
     letter-spacing: 0.04em;
     margin-bottom: 16px;
+    animation: fadeInUp 0.5s ease-out;
   }
   input[type=text] {
     width: 100%;
@@ -142,12 +178,12 @@
 </style>
 </head>
 <body>
+<canvas id="bgFx"></canvas>
 
 <div id="screen-start" class="card">
   <span class="badge">Machine Rift · Demo</span>
   <h1>Machine Rift</h1>
   <p>塔防遊戲最小可玩切片。輸入玩家名稱以連線後端 API 開始遊戲。</p>
-  <br>
   <input type="text" id="playerNameInput" placeholder="輸入玩家名稱" maxlength="100">
   <div class="btn-row">
     <button class="btn-primary" id="btnStart">開始</button>
@@ -199,6 +235,51 @@
 </div>
 
 <script>
+// ---------- Animated background (decorative node network) ----------
+(function () {
+  const bg = document.getElementById('bgFx');
+  const bctx = bg.getContext('2d');
+  let nodes = [];
+  function resize() {
+    bg.width = window.innerWidth;
+    bg.height = window.innerHeight;
+    const count = Math.round((bg.width * bg.height) / 22000);
+    nodes = Array.from({ length: count }, () => ({
+      x: Math.random() * bg.width,
+      y: Math.random() * bg.height,
+      vx: (Math.random() - 0.5) * 0.35,
+      vy: (Math.random() - 0.5) * 0.35,
+    }));
+  }
+  window.addEventListener('resize', resize);
+  resize();
+  function frame() {
+    bctx.clearRect(0, 0, bg.width, bg.height);
+    nodes.forEach(n => {
+      n.x += n.vx; n.y += n.vy;
+      if (n.x < 0 || n.x > bg.width) n.vx *= -1;
+      if (n.y < 0 || n.y > bg.height) n.vy *= -1;
+    });
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y;
+        const d = Math.hypot(dx, dy);
+        if (d < 130) {
+          bctx.strokeStyle = `rgba(77,208,225,${(1 - d / 130) * 0.25})`;
+          bctx.lineWidth = 0.6;
+          bctx.beginPath(); bctx.moveTo(nodes[i].x, nodes[i].y); bctx.lineTo(nodes[j].x, nodes[j].y); bctx.stroke();
+        }
+      }
+    }
+    nodes.forEach(n => {
+      bctx.fillStyle = 'rgba(77,208,225,0.55)';
+      bctx.beginPath(); bctx.arc(n.x, n.y, 1.6, 0, Math.PI * 2); bctx.fill();
+    });
+    requestAnimationFrame(frame);
+  }
+  frame();
+})();
+
 const screens = {
   start: document.getElementById('screen-start'),
   stages: document.getElementById('screen-stages'),
@@ -308,9 +389,61 @@ function renderStageList() {
 
 // ---------- Game constants ----------
 const CELL = 50, COLS = 14, ROWS = 8;
-const PATH_ROW = 4;
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+
+// Each stage gets its own route (grid waypoints, axis-aligned). Keyed by stageId,
+// with stageId 1 also serving as the fallback for any stage not listed here.
+const STAGE_ROUTES = {
+  1: [{ c: 0, r: 2 }, { c: 6, r: 2 }, { c: 6, r: 5 }, { c: 13, r: 5 }],
+  2: [{ c: 0, r: 1 }, { c: 4, r: 1 }, { c: 4, r: 4 }, { c: 9, r: 4 }, { c: 9, r: 6 }, { c: 13, r: 6 }],
+  3: [
+    { c: 0, r: 0 }, { c: 12, r: 0 }, { c: 12, r: 2 }, { c: 1, r: 2 },
+    { c: 1, r: 4 }, { c: 12, r: 4 }, { c: 12, r: 6 }, { c: 1, r: 6 }, { c: 1, r: 7 }, { c: 13, r: 7 },
+  ],
+};
+
+function routeForStage(stage) {
+  return STAGE_ROUTES[stage && stage.stageId] || STAGE_ROUTES[1];
+}
+
+function computePathCells(route) {
+  const cells = new Set();
+  for (let i = 0; i < route.length - 1; i++) {
+    const a = route[i], b = route[i + 1];
+    if (a.r === b.r) {
+      for (let c = Math.min(a.c, b.c); c <= Math.max(a.c, b.c); c++) cells.add(c + ',' + a.r);
+    } else {
+      for (let r = Math.min(a.r, b.r); r <= Math.max(a.r, b.r); r++) cells.add(a.c + ',' + r);
+    }
+  }
+  return cells;
+}
+
+function buildPathPoints(route) {
+  const gridPts = route.map(w => ({ x: w.c * CELL + CELL / 2, y: w.r * CELL + CELL / 2 }));
+  // Extend a short spawn/exit segment beyond the first and last waypoint so
+  // enemies enter and leave from just off the visible grid.
+  const first = gridPts[0], second = gridPts[1];
+  const d1 = Math.hypot(first.x - second.x, first.y - second.y) || 1;
+  const entry = { x: first.x + (first.x - second.x) / d1 * 40, y: first.y + (first.y - second.y) / d1 * 40 };
+  const last = gridPts[gridPts.length - 1], prev = gridPts[gridPts.length - 2];
+  const d2 = Math.hypot(last.x - prev.x, last.y - prev.y) || 1;
+  const exit = { x: last.x + (last.x - prev.x) / d2 * 40, y: last.y + (last.y - prev.y) / d2 * 40 };
+  const waypoints = [entry, ...gridPts, exit];
+
+  const pts = [];
+  for (let i = 0; i < waypoints.length - 1; i++) {
+    const a = waypoints[i], b = waypoints[i + 1];
+    const d = Math.hypot(b.x - a.x, b.y - a.y);
+    const steps = Math.max(1, Math.ceil(d / 4));
+    for (let s = 0; s < steps; s++) {
+      pts.push({ x: a.x + (b.x - a.x) * s / steps, y: a.y + (b.y - a.y) * s / steps });
+    }
+  }
+  pts.push(waypoints[waypoints.length - 1]);
+  return pts;
+}
 
 const DIFFICULTY_HP_MUL = { Easy: 1, Normal: 1.5, Hard: 2.2 };
 const ENEMY_BASE_HP = 40;
@@ -327,6 +460,7 @@ let rafId = null;
 
 function startGame() {
   const stage = state.selectedStage;
+  const route = routeForStage(stage);
   game = {
     gold: START_GOLD,
     baseHp: START_BASE_HP,
@@ -343,6 +477,9 @@ function startGame() {
     lastTs: null,
     startedAt: null,
     ended: false,
+    route,
+    pathCells: computePathCells(route),
+    pathPoints: buildPathPoints(route),
   };
   renderTowerPanel();
   updateHud();
@@ -387,7 +524,7 @@ canvas.addEventListener('click', (e) => {
   const mx = (e.clientX - rect.left) * scaleX, my = (e.clientY - rect.top) * scaleY;
   const col = Math.floor(mx / CELL), row = Math.floor(my / CELL);
   if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
-  if (row === PATH_ROW) return;
+  if (game.pathCells.has(col + ',' + row)) return;
   if (!game.selectedTowerType) return;
   if (game.towers.some(t => t.col === col && t.row === row)) return;
   const cfg = state.towers.find(t => t.towerId === game.selectedTowerType);
@@ -411,8 +548,9 @@ document.getElementById('btnStartWave').addEventListener('click', () => {
 });
 
 function spawnEnemy() {
+  const start = game.pathPoints[0];
   game.enemies.push({
-    x: -20, y: PATH_ROW * CELL + CELL / 2,
+    x: start.x, y: start.y, pathIdx: 0,
     hp: Math.round(ENEMY_BASE_HP * game.hpMul),
     maxHp: Math.round(ENEMY_BASE_HP * game.hpMul),
     speed: ENEMY_SPEED,
@@ -436,8 +574,17 @@ function loop(ts) {
 
     game.enemies.forEach(e => {
       if (!e.alive) return;
-      e.x += e.speed * dt / 1000;
-      if (e.x >= COLS * CELL + 20) {
+      let remaining = e.speed * dt / 1000;
+      while (remaining > 0 && e.pathIdx < game.pathPoints.length - 1) {
+        const target = game.pathPoints[e.pathIdx + 1];
+        const dx = target.x - e.x, dy = target.y - e.y, d = Math.hypot(dx, dy);
+        if (d <= remaining) {
+          e.x = target.x; e.y = target.y; e.pathIdx++; remaining -= d;
+        } else {
+          e.x += dx / d * remaining; e.y += dy / d * remaining; remaining = 0;
+        }
+      }
+      if (e.pathIdx >= game.pathPoints.length - 1) {
         e.alive = false;
         game.baseHp--;
         if (game.baseHp <= 0) endGame('LOSE');
@@ -448,10 +595,10 @@ function loop(ts) {
     game.towers.forEach(t => {
       t.cooldown -= dt;
       if (t.cooldown > 0) return;
-      let target = null, bestX = -1;
+      let target = null, bestProgress = -1;
       game.enemies.forEach(e => {
         const d = Math.hypot(e.x - t.x, e.y - t.y);
-        if (d <= t.range && e.x > bestX) { target = e; bestX = e.x; }
+        if (d <= t.range && e.pathIdx > bestProgress) { target = e; bestProgress = e.pathIdx; }
       });
       if (target) {
         game.projectiles.push({ x: t.x, y: t.y, target, damage: t.damage });
@@ -491,7 +638,8 @@ function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
-      ctx.fillStyle = r === PATH_ROW ? '#2c4468' : (( r + c) % 2 === 0 ? '#12213a' : '#0f1c32');
+      const onPath = game && game.pathCells.has(c + ',' + r);
+      ctx.fillStyle = onPath ? '#2c4468' : ((r + c) % 2 === 0 ? '#12213a' : '#0f1c32');
       ctx.fillRect(c * CELL, r * CELL, CELL, CELL);
     }
   }
@@ -500,6 +648,46 @@ function draw() {
   for (let r = 0; r <= ROWS; r++) { ctx.beginPath(); ctx.moveTo(0, r * CELL); ctx.lineTo(COLS * CELL, r * CELL); ctx.stroke(); }
 
   if (game) {
+    const route = game.route;
+    const toPx = w => ({ x: w.c * CELL + CELL / 2, y: w.r * CELL + CELL / 2 });
+    const p0 = toPx(route[0]), p1 = toPx(route[1]);
+    const pl = toPx(route[route.length - 1]);
+    const angle = Math.atan2(p1.y - p0.y, p1.x - p0.x);
+
+    // Spawn point — where enemies come from
+    ctx.save();
+    ctx.translate(p0.x, p0.y);
+    ctx.rotate(angle);
+    ctx.strokeStyle = '#ff5252'; ctx.lineWidth = 2;
+    ctx.shadowColor = '#ff5252'; ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.arc(0, 0, 16, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-4, -8); ctx.lineTo(8, 0); ctx.lineTo(-4, 8);
+    ctx.closePath(); ctx.fillStyle = '#ff5252'; ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = '#ff8a80';
+    ctx.font = '10px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.fillText('敵人入侵', p0.x, p0.y - 20);
+
+    // Base — what the player is defending
+    ctx.save();
+    ctx.shadowColor = '#4dd0e1'; ctx.shadowBlur = 14;
+    ctx.fillStyle = '#4dd0e1';
+    ctx.beginPath();
+    ctx.moveTo(pl.x, pl.y - 17);
+    ctx.lineTo(pl.x + 15, pl.y - 7);
+    ctx.lineTo(pl.x + 15, pl.y + 11);
+    ctx.lineTo(pl.x, pl.y + 18);
+    ctx.lineTo(pl.x - 15, pl.y + 11);
+    ctx.lineTo(pl.x - 15, pl.y - 7);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#062028';
+    ctx.beginPath(); ctx.arc(pl.x, pl.y, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = '#80deea';
+    ctx.font = '10px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.fillText('主堡', pl.x, pl.y - 21);
+
     game.towers.forEach(t => {
       ctx.fillStyle = '#4dd0e1';
       ctx.beginPath(); ctx.arc(t.x, t.y, 14, 0, Math.PI * 2); ctx.fill();

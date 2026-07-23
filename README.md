@@ -5,6 +5,9 @@ Machine Rift 是一款塔防遊戲。這個倉庫包含：
 - Spring Boot 後端：負責玩家、關卡、塔、對戰紀錄與排行榜的資料存取
 - 前端遊戲畫面（`src/main/resources/static/index.html`）：Canvas 繪製的最小可玩塔防切片，實際呼叫後端 API
 
+完整架構、資料模型、功能邊界與後續建議請參考
+[`docs/project-status.md`](docs/project-status.md)。
+
 ## 技術棧
 - Java 21
 - Spring Boot 3.5（Web、Data JPA、Validation、密碼加密）

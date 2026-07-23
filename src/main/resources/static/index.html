@@ -369,19 +369,26 @@ async function openRanking() {
 // ---------- Stage select ----------
 function renderStageList() {
   const listEl = document.getElementById('stageList');
-  listEl.innerHTML = state.stages.map(s => `
+  listEl.innerHTML = state.stages.map(s => {
+    const ready = Array.isArray(s.path) && s.path.length >= 2
+      && Array.isArray(s.waves) && s.waves.length > 0;
+    return `
     <div class="stage-card" data-id="${s.stageId}">
       <div>
         <div class="name">${s.stageName}</div>
-        <div class="meta">難度：${s.difficulty} · 敵人數：${s.enemyCount} · 獎勵金幣：${s.rewardGold}</div>
+        <div class="meta">難度：${s.difficulty} · 敵人數：${s.enemyCount} · 波次：${s.waves?.length || 0} · 獎勵金幣：${s.rewardGold}</div>
       </div>
-      <button class="btn-primary">開始</button>
+      <button class="btn-primary" ${ready ? '' : 'disabled'}>${ready ? '開始' : '尚未設定'}</button>
     </div>
-  `).join('');
+  `;
+  }).join('');
   listEl.querySelectorAll('.stage-card').forEach(card => {
     card.addEventListener('click', () => {
       const id = Number(card.dataset.id);
-      state.selectedStage = state.stages.find(s => s.stageId === id);
+      const stage = state.stages.find(s => s.stageId === id);
+      if (!stage || !Array.isArray(stage.path) || stage.path.length < 2
+          || !Array.isArray(stage.waves) || stage.waves.length === 0) return;
+      state.selectedStage = stage;
       startGame();
     });
   });
@@ -392,19 +399,11 @@ const CELL = 50, COLS = 14, ROWS = 8;
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Each stage gets its own route (grid waypoints, axis-aligned). Keyed by stageId,
-// with stageId 1 also serving as the fallback for any stage not listed here.
-const STAGE_ROUTES = {
-  1: [{ c: 0, r: 2 }, { c: 6, r: 2 }, { c: 6, r: 5 }, { c: 13, r: 5 }],
-  2: [{ c: 0, r: 1 }, { c: 4, r: 1 }, { c: 4, r: 4 }, { c: 9, r: 4 }, { c: 9, r: 6 }, { c: 13, r: 6 }],
-  3: [
-    { c: 0, r: 0 }, { c: 12, r: 0 }, { c: 12, r: 2 }, { c: 1, r: 2 },
-    { c: 1, r: 4 }, { c: 12, r: 4 }, { c: 12, r: 6 }, { c: 1, r: 6 }, { c: 1, r: 7 }, { c: 13, r: 7 },
-  ],
-};
-
 function routeForStage(stage) {
-  return STAGE_ROUTES[stage && stage.stageId] || STAGE_ROUTES[1];
+  if (!stage || !Array.isArray(stage.path)) return [];
+  return [...stage.path]
+    .sort((a, b) => a.pointOrder - b.pointOrder)
+    .map(point => ({ c: point.gridCol, r: point.gridRow }));
 }
 
 function computePathCells(route) {
@@ -445,13 +444,8 @@ function buildPathPoints(route) {
   return pts;
 }
 
-const DIFFICULTY_HP_MUL = { Easy: 1, Normal: 1.5, Hard: 2.2 };
-const ENEMY_BASE_HP = 40;
-const ENEMY_SPEED = 55; // px per second
-const ENEMY_REWARD = 12;
 const START_GOLD = 300;
 const START_BASE_HP = 10;
-const SPAWN_INTERVAL_MS = 850;
 const PROJECTILE_SPEED = 320;
 const HIT_RADIUS = 8;
 
@@ -461,6 +455,8 @@ let rafId = null;
 function startGame() {
   const stage = state.selectedStage;
   const route = routeForStage(stage);
+  const waves = [...stage.waves].sort((a, b) => a.waveNumber - b.waveNumber);
+  const totalEnemyCount = waves.reduce((total, wave) => total + wave.enemyCount, 0);
   game = {
     gold: START_GOLD,
     baseHp: START_BASE_HP,
@@ -471,8 +467,10 @@ function startGame() {
     selectedTowerType: null,
     waveActive: false,
     spawned: 0,
-    enemyCount: stage.enemyCount,
-    hpMul: DIFFICULTY_HP_MUL[stage.difficulty] || 1.2,
+    spawnedInWave: 0,
+    enemyCount: totalEnemyCount,
+    waves,
+    waveIndex: 0,
     spawnTimer: 0,
     lastTs: null,
     startedAt: null,
@@ -544,19 +542,23 @@ document.getElementById('btnStartWave').addEventListener('click', () => {
   game.waveActive = true;
   game.startedAt = performance.now();
   document.getElementById('btnStartWave').disabled = true;
-  document.getElementById('gameHint').textContent = '波次進行中...敵人抵達基地會扣血。';
+  document.getElementById('gameHint').textContent = `第 1/${game.waves.length} 波進行中...敵人抵達基地會扣血。`;
 });
 
-function spawnEnemy() {
+function spawnEnemy(wave) {
   const start = game.pathPoints[0];
+  const config = wave.enemy;
   game.enemies.push({
     x: start.x, y: start.y, pathIdx: 0,
-    hp: Math.round(ENEMY_BASE_HP * game.hpMul),
-    maxHp: Math.round(ENEMY_BASE_HP * game.hpMul),
-    speed: ENEMY_SPEED,
+    hp: config.health,
+    maxHp: config.health,
+    speed: config.speed,
+    rewardGold: config.rewardGold,
+    name: config.enemyName,
     alive: true,
   });
   game.spawned++;
+  game.spawnedInWave++;
 }
 
 function loop(ts) {
@@ -566,10 +568,11 @@ function loop(ts) {
   game.lastTs = ts;
 
   if (game.waveActive && !game.ended) {
+    const currentWave = game.waves[game.waveIndex];
     game.spawnTimer -= dt;
-    if (game.spawnTimer <= 0 && game.spawned < game.enemyCount) {
-      spawnEnemy();
-      game.spawnTimer = SPAWN_INTERVAL_MS;
+    if (currentWave && game.spawnTimer <= 0 && game.spawnedInWave < currentWave.enemyCount) {
+      spawnEnemy(currentWave);
+      game.spawnTimer = currentWave.spawnIntervalMs;
     }
 
     game.enemies.forEach(e => {
@@ -613,8 +616,8 @@ function loop(ts) {
         p.target.hp -= p.damage;
         if (p.target.hp <= 0) {
           p.target.alive = false;
-          game.gold += ENEMY_REWARD;
-          game.score += ENEMY_REWARD;
+          game.gold += p.target.rewardGold;
+          game.score += p.target.rewardGold;
         }
         p.dead = true;
       } else {
@@ -624,8 +627,18 @@ function loop(ts) {
     });
     game.projectiles = game.projectiles.filter(p => !p.dead);
 
-    if (!game.ended && game.spawned >= game.enemyCount && game.enemies.length === 0) {
-      endGame('WIN');
+    if (!game.ended && currentWave
+        && game.spawnedInWave >= currentWave.enemyCount
+        && game.enemies.length === 0) {
+      if (game.waveIndex >= game.waves.length - 1) {
+        endGame('WIN');
+      } else {
+        game.waveIndex++;
+        game.spawnedInWave = 0;
+        game.spawnTimer = 1200;
+        document.getElementById('gameHint').textContent =
+          `第 ${game.waveIndex + 1}/${game.waves.length} 波即將開始...`;
+      }
     }
     updateHud();
   }

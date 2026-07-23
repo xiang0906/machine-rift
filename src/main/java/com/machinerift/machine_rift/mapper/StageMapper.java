@@ -1,7 +1,10 @@
 package com.machinerift.machine_rift.mapper;
 
+import com.machinerift.machine_rift.dto.EnemyResponseDto;
+import com.machinerift.machine_rift.dto.StagePathResponseDto;
 import com.machinerift.machine_rift.dto.StageRequestDto;
 import com.machinerift.machine_rift.dto.StageResponseDto;
+import com.machinerift.machine_rift.dto.StageWaveResponseDto;
 import com.machinerift.machine_rift.entity.Stage;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +27,27 @@ public class StageMapper {
                 .difficulty(stage.getDifficulty())
                 .rewardGold(stage.getRewardGold())
                 .enemyCount(stage.getEnemyCount())
+                .path(stage.getPath().stream()
+                        .map(point -> StagePathResponseDto.builder()
+                                .pointOrder(point.getPointOrder())
+                                .gridCol(point.getGridCol())
+                                .gridRow(point.getGridRow())
+                                .build())
+                        .toList())
+                .waves(stage.getWaves().stream()
+                        .map(wave -> StageWaveResponseDto.builder()
+                                .waveNumber(wave.getWaveNumber())
+                                .enemyCount(wave.getEnemyCount())
+                                .spawnIntervalMs(wave.getSpawnIntervalMs())
+                                .enemy(EnemyResponseDto.builder()
+                                        .enemyId(wave.getEnemy().getEnemyId())
+                                        .enemyName(wave.getEnemy().getEnemyName())
+                                        .health(wave.getEnemy().getHealth())
+                                        .speed(wave.getEnemy().getSpeed())
+                                        .rewardGold(wave.getEnemy().getRewardGold())
+                                        .build())
+                                .build())
+                        .toList())
                 .build();
     }
 

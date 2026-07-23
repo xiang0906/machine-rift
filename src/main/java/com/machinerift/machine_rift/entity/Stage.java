@@ -5,11 +5,18 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Persistent entity representing a game stage.
@@ -38,4 +45,18 @@ public class Stage {
 
     @Column(name = "enemy_count", nullable = false)
     private Integer enemyCount;
+
+    @OneToMany(mappedBy = "stage")
+    @OrderBy("pointOrder ASC")
+    @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<StagePath> path = new ArrayList<>();
+
+    @OneToMany(mappedBy = "stage")
+    @OrderBy("waveNumber ASC")
+    @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<StageWave> waves = new ArrayList<>();
 }

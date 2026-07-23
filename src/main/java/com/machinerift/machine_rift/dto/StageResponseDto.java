@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
  * Response payload returned to clients for stage resources.
  */
@@ -19,4 +21,6 @@ public class StageResponseDto {
     private String difficulty;
     private Integer rewardGold;
     private Integer enemyCount;
+    private List<StagePathResponseDto> path;
+    private List<StageWaveResponseDto> waves;
 }

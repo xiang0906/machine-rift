@@ -58,8 +58,15 @@ DB_PASSWORD=你的本機MySQL密碼
 
 ## 資料庫
 - 連線設定在 [src/main/resources/application.properties](src/main/resources/application.properties)，預設連到 `jdbc:mysql://localhost:3306/machine_rift`。
-- `spring.jpa.hibernate.ddl-auto=update`，資料表會由 Hibernate 依 entity 定義自動建立/更新。
-- [src/main/resources/schema.sql](src/main/resources/schema.sql) 提供對應的建表語法，可作為手動建置資料庫或參考資料表結構之用。
+- 資料庫結構與初始內容由 Flyway 管理，migration 位於
+  [`src/main/resources/db/migration`](src/main/resources/db/migration)。
+- `spring.jpa.hibernate.ddl-auto=validate`，Hibernate 只驗證 entity 與資料表是否一致，
+  不會在啟動時自行修改正式資料庫結構。
+- 第一次啟動空白資料庫時，Flyway 會建立資料表，並加入三個關卡與三種防塔。
+- V3 會建立 `enemy`、`stage_path`、`stage_wave`，並加入三種敵人、
+  三條關卡路徑與九個波次設定。
+- 既有 MVP 資料庫若尚未有 Flyway history，啟動時會 baseline 為 V1，再執行後續 migration；
+  seed migration 只補上缺少的同名內容，不覆寫既有資料。
 - 核心資料表：`player`、`stage`、`tower`、`game_record`。刪除 `player` 或 `stage` 時，若已有關聯的 `game_record`，會被拒絕（回傳 409 衝突）。
 
 ## API 端點
@@ -123,7 +130,10 @@ Content-Type: application/json
 5. 基地血量歸零判定失敗、殺光所有敵人判定成功 → `POST /api/game-records` 儲存戰績
 6. 可另外查看排行榜 → `GET /api/rankings` 搭配 `GET /api/players` 顯示玩家名稱
 
-**注意**：畫面依賴資料庫裡已有的 `stage` 與 `tower` 資料才能玩，全新資料庫的話請先透過 API（或 Swagger UI）建立至少一筆關卡與塔，否則選單會是空的。目前的遊戲平衡數值（起始金幣、基地血量、敵人血量/速度、難度倍率等）是寫在前端程式碼裡的常數，尚未對應到資料庫欄位。
+全新資料庫會由 Flyway 自動建立三個關卡、三種防塔、三種敵人，以及各關卡的
+路徑與波次，因此首次啟動即可遊玩。前端會從 `GET /api/stages` 讀取路徑節點、
+敵人生命、速度、擊殺獎勵、每波數量與生成間隔；起始金幣、基地血量和投射物速度
+目前仍是前端常數。
 
 ## 專案現況
 - 後端 API 骨架與資料完整性防護已完成（玩家/關卡刪除保護、集中式例外處理）。

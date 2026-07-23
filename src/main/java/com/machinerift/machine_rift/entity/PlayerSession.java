@@ -2,9 +2,12 @@ package com.machinerift.machine_rift.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,34 +16,29 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-/**
- * Persistent entity representing a game player.
- */
 @Entity
-@Table(name = "player")
+@Table(name = "player_session")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Player {
+public class PlayerSession {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "player_id")
-    private Long playerId;
+    @Column(name = "player_session_id")
+    private Long playerSessionId;
 
-    @Column(name = "player_name", nullable = false, unique = true, length = 100)
-    private String playerName;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "player_id", nullable = false)
+    private Player player;
 
-    @Column(name = "username", nullable = false, unique = true, length = 50)
-    private String username;
-
-    @Column(name = "password_hash", nullable = false, length = 100)
-    private String passwordHash;
-
-    @Column(name = "level", nullable = false)
-    private Integer level;
+    @Column(name = "token_hash", nullable = false, unique = true, length = 64)
+    private String tokenHash;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "expires_at", nullable = false)
+    private LocalDateTime expiresAt;
 }

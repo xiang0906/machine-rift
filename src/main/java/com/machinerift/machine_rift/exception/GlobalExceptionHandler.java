@@ -40,7 +40,7 @@ public class GlobalExceptionHandler {
                         LinkedHashMap::new));
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.failure("Validation failed", errors));
+                .body(ApiResponse.failure("輸入資料有誤", errors));
     }
 
     /**
@@ -67,6 +67,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.failure(exception.getMessage()));
     }
 
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<?> handleAuthentication(AuthenticationException exception) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.failure(exception.getMessage()));
+    }
+
     /**
      * Handles unexpected server errors.
      *
@@ -78,6 +84,6 @@ public class GlobalExceptionHandler {
         log.error("Unhandled exception while processing request", exception);
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(ApiResponse.failure("An unexpected error occurred."));
+            .body(ApiResponse.failure("系統發生未預期的錯誤，請稍後再試"));
     }
 }

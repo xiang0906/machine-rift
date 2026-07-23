@@ -5,6 +5,7 @@ import com.machinerift.machine_rift.mapper.PlayerMapper;
 import com.machinerift.machine_rift.mapper.StageMapper;
 import com.machinerift.machine_rift.repository.GameRecordRepository;
 import com.machinerift.machine_rift.repository.PlayerRepository;
+import com.machinerift.machine_rift.repository.PlayerSessionRepository;
 import com.machinerift.machine_rift.repository.StageRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,12 +30,19 @@ class DeletionIntegrityServiceTest {
     @Mock
     private GameRecordRepository gameRecordRepository;
 
+    @Mock
+    private PlayerProgressService playerProgressService;
+
+    @Mock
+    private PlayerSessionRepository playerSessionRepository;
+
     private PlayerService playerService;
     private StageService stageService;
 
     @BeforeEach
     void setUp() {
-        playerService = new PlayerService(playerRepository, gameRecordRepository, new PlayerMapper());
+        playerService = new PlayerService(
+                playerRepository, gameRecordRepository, new PlayerMapper(), playerSessionRepository);
         stageService = new StageService(stageRepository, gameRecordRepository, new StageMapper());
     }
 
@@ -65,6 +73,7 @@ class DeletionIntegrityServiceTest {
 
         playerService.deletePlayer(1L);
 
+        verify(playerSessionRepository).deleteAllByPlayerPlayerId(1L);
         verify(playerRepository).deleteById(1L);
     }
 }

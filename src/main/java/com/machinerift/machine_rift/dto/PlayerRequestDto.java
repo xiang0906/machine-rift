@@ -17,10 +17,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PlayerRequestDto {
 
-    @NotBlank(message = "Player name is required")
-    @Size(max = 100, message = "Player name must be at most 100 characters")
+    @NotBlank(message = "請輸入玩家顯示名稱")
+    @Size(max = 100, message = "玩家顯示名稱最多 100 個字元")
     private String playerName;
 
-    @Min(value = 1, message = "Level must be at least 1")
+    @Min(value = 1, message = "玩家等級至少為 1")
     private Integer level;
 }

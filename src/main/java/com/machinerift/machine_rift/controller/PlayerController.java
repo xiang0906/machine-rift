@@ -2,19 +2,21 @@ package com.machinerift.machine_rift.controller;
 
 import com.machinerift.machine_rift.dto.ApiResponse;
 import com.machinerift.machine_rift.dto.PlayerRequestDto;
+import com.machinerift.machine_rift.dto.PlayerProgressResponseDto;
 import com.machinerift.machine_rift.dto.PlayerResponseDto;
 import com.machinerift.machine_rift.service.PlayerService;
+import com.machinerift.machine_rift.service.PlayerProgressService;
+import com.machinerift.machine_rift.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -28,6 +30,8 @@ import java.util.List;
 public class PlayerController {
 
     private final PlayerService playerService;
+    private final PlayerProgressService playerProgressService;
+    private final AuthService authService;
 
     /**
      * Lists all players.
@@ -51,15 +55,16 @@ public class PlayerController {
     }
 
     /**
-     * Creates a new player.
-     *
-     * @param requestDto validated request payload
-     * @return created player response
+     * Returns progression, unlocked content, and personal bests.
      */
-    @PostMapping
-    public ResponseEntity<ApiResponse<PlayerResponseDto>> createPlayer(@Valid @RequestBody PlayerRequestDto requestDto) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Player created successfully.", playerService.createPlayer(requestDto)));
+    @GetMapping("/{id}/progress")
+    public ResponseEntity<ApiResponse<PlayerProgressResponseDto>> getPlayerProgress(
+            @PathVariable Long id,
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        authService.requirePlayer(authorization, id);
+        return ResponseEntity.ok(ApiResponse.success(
+                "Player progress retrieved successfully.",
+                playerProgressService.getProgress(id)));
     }
 
     /**
@@ -71,7 +76,10 @@ public class PlayerController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<PlayerResponseDto>> updatePlayer(@PathVariable Long id,
-                                                                      @Valid @RequestBody PlayerRequestDto requestDto) {
+                                                                      @Valid @RequestBody PlayerRequestDto requestDto,
+                                                                      @RequestHeader(value = "Authorization", required = false)
+                                                                      String authorization) {
+        authService.requirePlayer(authorization, id);
         return ResponseEntity.ok(ApiResponse.success("Player updated successfully.", playerService.updatePlayer(id, requestDto)));
     }
 
@@ -82,7 +90,10 @@ public class PlayerController {
      * @return empty success response
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deletePlayer(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deletePlayer(
+            @PathVariable Long id,
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        authService.requirePlayer(authorization, id);
         playerService.deletePlayer(id);
         return ResponseEntity.ok(ApiResponse.success("Player deleted successfully.", null));
     }

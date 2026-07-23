@@ -8,9 +8,11 @@ import com.machinerift.machine_rift.exception.ResourceNotFoundException;
 import com.machinerift.machine_rift.mapper.PlayerMapper;
 import com.machinerift.machine_rift.repository.GameRecordRepository;
 import com.machinerift.machine_rift.repository.PlayerRepository;
+import com.machinerift.machine_rift.repository.PlayerSessionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
 
@@ -24,6 +26,7 @@ public class PlayerService {
     private final PlayerRepository playerRepository;
     private final GameRecordRepository gameRecordRepository;
     private final PlayerMapper playerMapper;
+    private final PlayerSessionRepository playerSessionRepository;
 
     /**
      * Retrieves all players.
@@ -46,21 +49,8 @@ public class PlayerService {
     @Transactional(readOnly = true)
     public PlayerResponseDto getPlayerById(Long id) {
         Player player = playerRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Player not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("找不到玩家，ID：" + id));
         return playerMapper.toResponseDto(player);
-    }
-
-    /**
-     * Creates a new player.
-     *
-     * @param requestDto player creation payload
-     * @return created player response DTO
-     */
-    @Transactional
-    public PlayerResponseDto createPlayer(PlayerRequestDto requestDto) {
-        Player player = playerMapper.toEntity(requestDto);
-        Player savedPlayer = playerRepository.save(player);
-        return playerMapper.toResponseDto(savedPlayer);
     }
 
     /**
@@ -73,9 +63,18 @@ public class PlayerService {
     @Transactional
     public PlayerResponseDto updatePlayer(Long id, PlayerRequestDto requestDto) {
         Player player = playerRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Player not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("找不到玩家，ID：" + id));
+        String playerName = requestDto.getPlayerName().trim();
+        if (playerRepository.existsByPlayerNameIgnoreCaseAndPlayerIdNot(playerName, id)) {
+            throw new ResourceConflictException("此玩家名稱已被使用");
+        }
         playerMapper.updateEntity(player, requestDto);
-        return playerMapper.toResponseDto(playerRepository.save(player));
+        player.setPlayerName(playerName);
+        try {
+            return playerMapper.toResponseDto(playerRepository.saveAndFlush(player));
+        } catch (DataIntegrityViolationException exception) {
+            throw new ResourceConflictException("此玩家名稱已被使用");
+        }
     }
 
     /**
@@ -86,11 +85,12 @@ public class PlayerService {
     @Transactional
     public void deletePlayer(Long id) {
         if (!playerRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Player not found with id: " + id);
+            throw new ResourceNotFoundException("找不到玩家，ID：" + id);
         }
         if (gameRecordRepository.existsByPlayerPlayerId(id)) {
-            throw new ResourceConflictException("Cannot delete player with existing game records.");
+            throw new ResourceConflictException("玩家已有遊戲紀錄，無法刪除");
         }
+        playerSessionRepository.deleteAllByPlayerPlayerId(id);
         playerRepository.deleteById(id);
     }
 }

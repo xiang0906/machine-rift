@@ -29,6 +29,8 @@ class GameRecordRepositoryTest {
     void shouldOrderRankingsAndDetectRelatedGameRecords() {
         Player player = playerRepository.save(Player.builder()
                 .playerName("Alice")
+                .username("alice")
+                .passwordHash("test-password-hash")
                 .level(1)
                 .createdAt(LocalDateTime.now())
                 .build());

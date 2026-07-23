@@ -4,6 +4,7 @@ import com.machinerift.machine_rift.dto.ApiResponse;
 import com.machinerift.machine_rift.dto.GameRecordRequestDto;
 import com.machinerift.machine_rift.dto.GameRecordResponseDto;
 import com.machinerift.machine_rift.service.GameRecordService;
+import com.machinerift.machine_rift.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -26,6 +28,7 @@ import java.util.List;
 public class GameRecordController {
 
     private final GameRecordService gameRecordService;
+    private final AuthService authService;
 
     /**
      * Saves a finished game session.
@@ -34,7 +37,10 @@ public class GameRecordController {
      * @return created game record response
      */
     @PostMapping("/game-records")
-    public ResponseEntity<ApiResponse<GameRecordResponseDto>> saveGameRecord(@Valid @RequestBody GameRecordRequestDto requestDto) {
+    public ResponseEntity<ApiResponse<GameRecordResponseDto>> saveGameRecord(
+            @Valid @RequestBody GameRecordRequestDto requestDto,
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        authService.requirePlayer(authorization, requestDto.getPlayerId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Game record saved successfully.", gameRecordService.saveGameRecord(requestDto)));
     }
@@ -66,7 +72,9 @@ public class GameRecordController {
      * @return response entity containing ranking data
      */
     @GetMapping("/rankings")
-    public ResponseEntity<ApiResponse<List<GameRecordResponseDto>>> getRankings() {
+    public ResponseEntity<ApiResponse<List<GameRecordResponseDto>>> getRankings(
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        authService.requirePlayer(authorization);
         return ResponseEntity.ok(ApiResponse.success("Ranking retrieved successfully.", gameRecordService.getRankings()));
     }
 }

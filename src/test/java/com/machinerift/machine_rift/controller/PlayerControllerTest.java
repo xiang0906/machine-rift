@@ -1,9 +1,11 @@
 package com.machinerift.machine_rift.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.machinerift.machine_rift.dto.PlayerResponseDto;
+import com.machinerift.machine_rift.exception.AuthenticationException;
 import com.machinerift.machine_rift.exception.ResourceConflictException;
 import com.machinerift.machine_rift.service.PlayerService;
+import com.machinerift.machine_rift.service.PlayerProgressService;
+import com.machinerift.machine_rift.service.AuthService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -17,7 +19,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -30,8 +31,11 @@ class PlayerControllerTest {
     @MockBean
     private PlayerService playerService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    @MockBean
+    private PlayerProgressService playerProgressService;
+
+    @MockBean
+    private AuthService authService;
 
     @Test
     void shouldReturnPlayersWithApiResponseWrapper() throws Exception {
@@ -51,17 +55,14 @@ class PlayerControllerTest {
     }
 
     @Test
-    void shouldReturnFieldValidationErrors() throws Exception {
-        mockMvc.perform(post("/api/players")
-                        .contentType("application/json")
-                        .content("""
-                                {"playerName":"","level":0}
-                                """))
-                .andExpect(status().isBadRequest())
+    void shouldRequireLoginForPlayerProgress() throws Exception {
+        when(authService.requirePlayer(null, 1L))
+                .thenThrow(new AuthenticationException("請先登入"));
+
+        mockMvc.perform(get("/api/players/1/progress"))
+                .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Validation failed"))
-                .andExpect(jsonPath("$.data.playerName").value("Player name is required"))
-                .andExpect(jsonPath("$.data.level").value("Level must be at least 1"));
+                .andExpect(jsonPath("$.message").value("請先登入"));
     }
 
     @Test
@@ -71,7 +72,7 @@ class PlayerControllerTest {
         mockMvc.perform(get("/api/players"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("An unexpected error occurred."))
+                .andExpect(jsonPath("$.message").value("系統發生未預期的錯誤，請稍後再試"))
                 .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.not("Database connection secret")));
     }
 
@@ -80,7 +81,8 @@ class PlayerControllerTest {
         doThrow(new ResourceConflictException("Cannot delete player with existing game records."))
                 .when(playerService).deletePlayer(1L);
 
-        mockMvc.perform(delete("/api/players/1"))
+        mockMvc.perform(delete("/api/players/1")
+                        .header("Authorization", "Bearer test-token"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Cannot delete player with existing game records."));

@@ -36,12 +36,16 @@ class GameRecordServiceTest {
     @Mock
     private StageRepository stageRepository;
 
+    @Mock
+    private PlayerProgressService playerProgressService;
+
     private GameRecordService gameRecordService;
 
     @BeforeEach
     void setUp() {
         gameRecordService = new GameRecordService(
-                gameRecordRepository, playerRepository, stageRepository, new GameRecordMapper());
+                gameRecordRepository, playerRepository, stageRepository,
+                new GameRecordMapper(), playerProgressService);
     }
 
     @Test
@@ -52,6 +56,7 @@ class GameRecordServiceTest {
                 .playerId(1L).stageId(2L).score(900).result("WIN").playTime(120).build();
         when(playerRepository.findById(1L)).thenReturn(Optional.of(player));
         when(stageRepository.findById(2L)).thenReturn(Optional.of(stage));
+        when(playerProgressService.isStageUnlocked(player, stage)).thenReturn(true);
         when(gameRecordRepository.save(any(GameRecord.class))).thenAnswer(invocation -> {
             GameRecord record = invocation.getArgument(0);
             record.setRecordId(10L);
@@ -61,6 +66,7 @@ class GameRecordServiceTest {
         GameRecordResponseDto response = gameRecordService.saveGameRecord(request);
         ArgumentCaptor<GameRecord> savedRecord = ArgumentCaptor.forClass(GameRecord.class);
         verify(gameRecordRepository).save(savedRecord.capture());
+        verify(playerProgressService).recordGameResult(player, stage, 900, "WIN", 120);
 
         assertEquals(10L, response.getRecordId());
         assertEquals(1L, savedRecord.getValue().getPlayer().getPlayerId());

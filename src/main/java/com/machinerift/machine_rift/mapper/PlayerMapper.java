@@ -27,20 +27,6 @@ public class PlayerMapper {
     }
 
     /**
-     * Maps a request DTO to a new entity.
-     *
-     * @param requestDto incoming data
-     * @return entity ready for persistence
-     */
-    public Player toEntity(PlayerRequestDto requestDto) {
-        return Player.builder()
-                .playerName(requestDto.getPlayerName())
-                .level(requestDto.getLevel())
-                .createdAt(java.time.LocalDateTime.now())
-                .build();
-    }
-
-    /**
      * Updates an existing entity from a request DTO.
      *
      * @param entity existing entity

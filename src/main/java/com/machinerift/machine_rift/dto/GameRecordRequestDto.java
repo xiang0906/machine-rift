@@ -3,6 +3,7 @@ package com.machinerift.machine_rift.dto;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,6 +29,8 @@ public class GameRecordRequestDto {
     private Integer score;
 
     @NotBlank(message = "Result is required")
+    @Pattern(regexp = "WIN|LOSE", flags = Pattern.Flag.CASE_INSENSITIVE,
+            message = "Result must be WIN or LOSE")
     private String result;
 
     @NotNull(message = "Play time is required")

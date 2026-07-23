@@ -6,6 +6,7 @@ import com.machinerift.machine_rift.entity.GameRecord;
 import com.machinerift.machine_rift.entity.Player;
 import com.machinerift.machine_rift.entity.Stage;
 import com.machinerift.machine_rift.exception.ResourceNotFoundException;
+import com.machinerift.machine_rift.exception.ResourceConflictException;
 import com.machinerift.machine_rift.mapper.GameRecordMapper;
 import com.machinerift.machine_rift.repository.GameRecordRepository;
 import com.machinerift.machine_rift.repository.PlayerRepository;
@@ -27,6 +28,7 @@ public class GameRecordService {
     private final PlayerRepository playerRepository;
     private final StageRepository stageRepository;
     private final GameRecordMapper gameRecordMapper;
+    private final PlayerProgressService playerProgressService;
 
     /**
      * Saves a completed game session.
@@ -40,8 +42,17 @@ public class GameRecordService {
                 .orElseThrow(() -> new ResourceNotFoundException("Player not found with id: " + requestDto.getPlayerId()));
         Stage stage = stageRepository.findById(requestDto.getStageId())
                 .orElseThrow(() -> new ResourceNotFoundException("Stage not found with id: " + requestDto.getStageId()));
+        if (!playerProgressService.isStageUnlocked(player, stage)) {
+            throw new ResourceConflictException("Stage is locked for player: " + requestDto.getPlayerId());
+        }
 
         GameRecord savedRecord = gameRecordRepository.save(gameRecordMapper.toEntity(requestDto, player, stage));
+        playerProgressService.recordGameResult(
+                player,
+                stage,
+                requestDto.getScore(),
+                requestDto.getResult(),
+                requestDto.getPlayTime());
         return gameRecordMapper.toResponseDto(savedRecord);
     }
 

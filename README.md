@@ -104,11 +104,13 @@ Windows PowerShell：
 - V11 會新增三種防塔，讓防塔總數增加為六種。
 - V12 會新增三種敵人、重新配置既有波次，並讓六種敵人都會實際出場。
 - V13 會新增三個關卡及各自不重複的路線與波次，讓關卡總數增加為六關。
+- V14 會將玩家總進度、最新登入 Session 與塔解鎖數量合併至 `player`，
+  並移除三張舊關聯表，將業務資料表收斂為八張。
 - 既有 MVP 資料庫若尚未有 Flyway history，啟動時會 baseline 為 V1，再執行後續 migration；
   seed migration 只補上缺少的同名內容，不覆寫既有資料。
-- 核心資料表：`player`、`player_session`、`player_progress`、`player_stage_progress`、
-  `player_tower_unlock`、`stage`、`stage_path`、`stage_wave`、`tower`、`enemy`、
-  `game_record`。資料表之間以外鍵維持玩家、關卡與戰績的關聯完整性。
+- 核心資料表：`player`、`player_stage_progress`、`stage`、`stage_path`、
+  `stage_wave`、`tower`、`enemy`、`game_record`。資料表之間以外鍵維持玩家、
+  關卡與戰績的關聯完整性。
 
 ## API 端點
 

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,8 +51,32 @@ class MachineRiftApplicationTests {
 	@Autowired
 	private ObjectMapper objectMapper;
 
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
+
 	@Test
 	void contextLoads() {
+	}
+
+	@Test
+	void databaseSchemaUsesEightBusinessTables() {
+		Set<String> businessTables = Set.copyOf(jdbcTemplate.queryForList("""
+				SELECT LOWER(TABLE_NAME)
+				FROM INFORMATION_SCHEMA.TABLES
+				WHERE TABLE_SCHEMA = 'PUBLIC'
+				  AND TABLE_TYPE = 'BASE TABLE'
+				  AND LOWER(TABLE_NAME) <> 'flyway_schema_history'
+				""", String.class));
+
+		assertEquals(Set.of(
+				"player",
+				"player_stage_progress",
+				"stage",
+				"stage_path",
+				"stage_wave",
+				"enemy",
+				"tower",
+				"game_record"), businessTables);
 	}
 
 	@Test
@@ -200,6 +225,30 @@ class MachineRiftApplicationTests {
 				.andExpect(jsonPath("$.data.stages[0].bestPlayTime").value(50))
 				.andExpect(jsonPath("$.data.stages[1].unlocked").value(true))
 				.andExpect(jsonPath("$.data.unlockedTowers.length()").value(2));
+
+		String replacementLoginResponse = mockMvc.perform(post("/api/auth/login")
+						.contentType("application/json")
+						.content("""
+								{
+								  "username":"progress.tester+01@example!",
+								  "password":"strong-password"
+								}
+								"""))
+				.andExpect(status().isOk())
+				.andReturn()
+				.getResponse()
+				.getContentAsString();
+		String replacementToken = objectMapper.readTree(replacementLoginResponse)
+				.path("data").path("accessToken").asText();
+
+		mockMvc.perform(get("/api/players/{id}/progress", playerId)
+						.header("Authorization", "Bearer " + restoredToken))
+				.andExpect(status().isUnauthorized());
+
+		mockMvc.perform(get("/api/players/{id}/progress", playerId)
+						.header("Authorization", "Bearer " + replacementToken))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.experience").value(1200));
 	}
 
 	@Test

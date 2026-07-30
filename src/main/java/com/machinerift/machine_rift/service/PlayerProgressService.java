@@ -4,16 +4,11 @@ import com.machinerift.machine_rift.dto.PlayerProgressResponseDto;
 import com.machinerift.machine_rift.dto.PlayerStageProgressResponseDto;
 import com.machinerift.machine_rift.dto.UnlockedTowerResponseDto;
 import com.machinerift.machine_rift.entity.Player;
-import com.machinerift.machine_rift.entity.PlayerProgress;
 import com.machinerift.machine_rift.entity.PlayerStageProgress;
-import com.machinerift.machine_rift.entity.PlayerTowerUnlock;
 import com.machinerift.machine_rift.entity.Stage;
-import com.machinerift.machine_rift.entity.Tower;
 import com.machinerift.machine_rift.exception.ResourceNotFoundException;
-import com.machinerift.machine_rift.repository.PlayerProgressRepository;
 import com.machinerift.machine_rift.repository.PlayerRepository;
 import com.machinerift.machine_rift.repository.PlayerStageProgressRepository;
-import com.machinerift.machine_rift.repository.PlayerTowerUnlockRepository;
 import com.machinerift.machine_rift.repository.StageRepository;
 import com.machinerift.machine_rift.repository.TowerRepository;
 import lombok.RequiredArgsConstructor;
@@ -35,9 +30,7 @@ public class PlayerProgressService {
     private static final int EXPERIENCE_PER_LEVEL = 1000;
 
     private final PlayerRepository playerRepository;
-    private final PlayerProgressRepository playerProgressRepository;
     private final PlayerStageProgressRepository playerStageProgressRepository;
-    private final PlayerTowerUnlockRepository playerTowerUnlockRepository;
     private final StageRepository stageRepository;
     private final TowerRepository towerRepository;
 
@@ -49,14 +42,18 @@ public class PlayerProgressService {
     @Transactional
     public void initializePlayer(Player player) {
         LocalDateTime now = LocalDateTime.now();
-        if (!playerProgressRepository.existsById(player.getPlayerId())) {
-            playerProgressRepository.save(PlayerProgress.builder()
-                    .player(player)
-                    .experience(0)
-                    .gold(0)
-                    .completedStages(0)
-                    .updatedAt(now)
-                    .build());
+        boolean playerChanged = false;
+        if (player.getExperience() == null) {
+            player.setExperience(0);
+            playerChanged = true;
+        }
+        if (player.getGold() == null) {
+            player.setGold(0);
+            playerChanged = true;
+        }
+        if (player.getCompletedStages() == null) {
+            player.setCompletedStages(0);
+            playerChanged = true;
         }
 
         findFirstPlayableStage().ifPresent(stage -> {
@@ -66,12 +63,24 @@ public class PlayerProgressService {
             }
         });
 
-        towerRepository.findAllByOrderByCostAscTowerIdAsc().stream().findFirst().ifPresent(tower -> {
-            if (!playerTowerUnlockRepository
-                    .existsByPlayerPlayerIdAndTowerTowerId(player.getPlayerId(), tower.getTowerId())) {
-                unlockTower(player, tower, now);
-            }
-        });
+        int towerCount = towerRepository.findAllByOrderByCostAscTowerIdAsc().size();
+        int currentUnlockedCount = player.getUnlockedTowerCount() == null
+                ? 0
+                : player.getUnlockedTowerCount();
+        int normalizedUnlockedCount = towerCount == 0
+                ? 0
+                : Math.max(1, Math.min(currentUnlockedCount, towerCount));
+        if (currentUnlockedCount != normalizedUnlockedCount) {
+            player.setUnlockedTowerCount(normalizedUnlockedCount);
+            playerChanged = true;
+        }
+        if (player.getUpdatedAt() == null) {
+            playerChanged = true;
+        }
+        if (playerChanged) {
+            player.setUpdatedAt(now);
+            playerRepository.save(player);
+        }
     }
 
     /**
@@ -85,8 +94,6 @@ public class PlayerProgressService {
         Player player = getPlayer(playerId);
         initializePlayer(player);
 
-        PlayerProgress progress = playerProgressRepository.findById(playerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Progress not found for player: " + playerId));
         Map<Long, PlayerStageProgress> progressByStage = playerStageProgressRepository
                 .findAllByPlayerPlayerIdOrderByStageStageIdAsc(playerId).stream()
                 .collect(Collectors.toMap(
@@ -107,20 +114,22 @@ public class PlayerProgressService {
                 })
                 .toList();
 
-        var towers = playerTowerUnlockRepository
-                .findAllByPlayerPlayerIdOrderByTowerCostAscTowerTowerIdAsc(playerId).stream()
-                .map(unlock -> UnlockedTowerResponseDto.builder()
-                        .towerId(unlock.getTower().getTowerId())
-                        .towerName(unlock.getTower().getTowerName())
+        var sortedTowers = towerRepository.findAllByOrderByCostAscTowerIdAsc();
+        int unlockedTowerCount = Math.min(player.getUnlockedTowerCount(), sortedTowers.size());
+        var towers = sortedTowers.stream()
+                .limit(unlockedTowerCount)
+                .map(tower -> UnlockedTowerResponseDto.builder()
+                        .towerId(tower.getTowerId())
+                        .towerName(tower.getTowerName())
                         .build())
                 .toList();
 
         return PlayerProgressResponseDto.builder()
                 .playerId(playerId)
                 .level(player.getLevel())
-                .experience(progress.getExperience())
-                .gold(progress.getGold())
-                .completedStages(progress.getCompletedStages())
+                .experience(player.getExperience())
+                .gold(player.getGold())
+                .completedStages(player.getCompletedStages())
                 .stages(stages)
                 .unlockedTowers(towers)
                 .build();
@@ -144,9 +153,6 @@ public class PlayerProgressService {
     public void recordGameResult(Player player, Stage stage, int score, String result, int playTime) {
         initializePlayer(player);
         LocalDateTime now = LocalDateTime.now();
-        PlayerProgress progress = playerProgressRepository.findById(player.getPlayerId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Progress not found for player: " + player.getPlayerId()));
         PlayerStageProgress stageProgress = playerStageProgressRepository
                 .findByPlayerPlayerIdAndStageStageId(player.getPlayerId(), stage.getStageId())
                 .orElseGet(() -> PlayerStageProgress.builder()
@@ -162,24 +168,23 @@ public class PlayerProgressService {
             stageProgress.setBestPlayTime(playTime);
         }
 
-        progress.setExperience(progress.getExperience() + score);
+        player.setExperience(player.getExperience() + score);
         if ("WIN".equalsIgnoreCase(result)) {
             boolean firstCompletion = stageProgress.getCompletionCount() == 0;
             stageProgress.setCompletionCount(stageProgress.getCompletionCount() + 1);
-            progress.setGold(progress.getGold() + stage.getRewardGold());
+            player.setGold(player.getGold() + stage.getRewardGold());
             if (firstCompletion) {
-                progress.setCompletedStages(progress.getCompletedStages() + 1);
+                player.setCompletedStages(player.getCompletedStages() + 1);
             }
             unlockNextStage(player, stage, now);
             unlockNextTower(player, now);
         }
 
-        player.setLevel(1 + progress.getExperience() / EXPERIENCE_PER_LEVEL);
+        player.setLevel(1 + player.getExperience() / EXPERIENCE_PER_LEVEL);
         stageProgress.setUnlocked(true);
         stageProgress.setUpdatedAt(now);
-        progress.setUpdatedAt(now);
+        player.setUpdatedAt(now);
         playerStageProgressRepository.save(stageProgress);
-        playerProgressRepository.save(progress);
         playerRepository.save(player);
     }
 
@@ -208,12 +213,11 @@ public class PlayerProgressService {
     }
 
     private void unlockNextTower(Player player, LocalDateTime now) {
-        towerRepository.findAllByOrderByCostAscTowerIdAsc().stream()
-                .filter(tower -> !playerTowerUnlockRepository
-                        .existsByPlayerPlayerIdAndTowerTowerId(
-                                player.getPlayerId(), tower.getTowerId()))
-                .findFirst()
-                .ifPresent(tower -> unlockTower(player, tower, now));
+        int towerCount = towerRepository.findAllByOrderByCostAscTowerIdAsc().size();
+        if (player.getUnlockedTowerCount() < towerCount) {
+            player.setUnlockedTowerCount(player.getUnlockedTowerCount() + 1);
+            player.setUpdatedAt(now);
+        }
     }
 
     private void unlockStage(Player player, Stage stage, LocalDateTime now) {
@@ -227,14 +231,6 @@ public class PlayerProgressService {
         stageProgress.setUnlocked(true);
         stageProgress.setUpdatedAt(now);
         playerStageProgressRepository.save(stageProgress);
-    }
-
-    private void unlockTower(Player player, Tower tower, LocalDateTime now) {
-        playerTowerUnlockRepository.save(PlayerTowerUnlock.builder()
-                .player(player)
-                .tower(tower)
-                .unlockedAt(now)
-                .build());
     }
 
     private Player getPlayer(Long playerId) {

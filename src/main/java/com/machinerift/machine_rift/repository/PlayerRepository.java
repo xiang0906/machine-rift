@@ -14,6 +14,8 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
 
     Optional<Player> findByUsername(String username);
 
+    Optional<Player> findBySessionTokenHash(String sessionTokenHash);
+
     boolean existsByUsername(String username);
 
     boolean existsByPlayerNameIgnoreCase(String playerName);

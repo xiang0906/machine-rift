@@ -4,12 +4,10 @@ import com.machinerift.machine_rift.dto.AuthLoginRequestDto;
 import com.machinerift.machine_rift.dto.AuthRegisterRequestDto;
 import com.machinerift.machine_rift.dto.AuthResponseDto;
 import com.machinerift.machine_rift.entity.Player;
-import com.machinerift.machine_rift.entity.PlayerSession;
 import com.machinerift.machine_rift.exception.AuthenticationException;
 import com.machinerift.machine_rift.exception.ResourceConflictException;
 import com.machinerift.machine_rift.mapper.PlayerMapper;
 import com.machinerift.machine_rift.repository.PlayerRepository;
-import com.machinerift.machine_rift.repository.PlayerSessionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -33,7 +31,6 @@ public class AuthService {
     private static final int SESSION_DAYS = 30;
 
     private final PlayerRepository playerRepository;
-    private final PlayerSessionRepository playerSessionRepository;
     private final PlayerProgressService playerProgressService;
     private final PlayerMapper playerMapper;
     private final PasswordEncoder passwordEncoder;
@@ -51,13 +48,19 @@ public class AuthService {
         }
 
         Player player;
+        LocalDateTime now = LocalDateTime.now();
         try {
             player = playerRepository.saveAndFlush(Player.builder()
                     .username(username)
                     .passwordHash(passwordEncoder.encode(request.getPassword()))
                     .playerName(playerName)
                     .level(1)
-                    .createdAt(LocalDateTime.now())
+                    .experience(0)
+                    .gold(0)
+                    .completedStages(0)
+                    .unlockedTowerCount(0)
+                    .createdAt(now)
+                    .updatedAt(now)
                     .build());
         } catch (DataIntegrityViolationException exception) {
             throw new ResourceConflictException("此帳號或玩家名稱已被使用");
@@ -79,12 +82,13 @@ public class AuthService {
     @Transactional(readOnly = true)
     public Player requirePlayer(String authorizationHeader) {
         String rawToken = extractBearerToken(authorizationHeader);
-        PlayerSession session = playerSessionRepository.findByTokenHash(hashToken(rawToken))
+        Player player = playerRepository.findBySessionTokenHash(hashToken(rawToken))
                 .orElseThrow(() -> new AuthenticationException("登入狀態無效，請重新登入"));
-        if (!session.getExpiresAt().isAfter(LocalDateTime.now())) {
+        if (player.getSessionExpiresAt() == null
+                || !player.getSessionExpiresAt().isAfter(LocalDateTime.now())) {
             throw new AuthenticationException("登入已過期，請重新登入");
         }
-        return session.getPlayer();
+        return player;
     }
 
     @Transactional(readOnly = true)
@@ -99,28 +103,25 @@ public class AuthService {
     @Transactional
     public void logout(String authorizationHeader) {
         String rawToken = extractBearerToken(authorizationHeader);
-        playerSessionRepository.deleteByTokenHash(hashToken(rawToken));
-    }
-
-    @Transactional
-    public void removeExpiredSessions() {
-        playerSessionRepository.deleteAllByExpiresAtBefore(LocalDateTime.now());
+        playerRepository.findBySessionTokenHash(hashToken(rawToken)).ifPresent(player -> {
+            player.setSessionTokenHash(null);
+            player.setSessionExpiresAt(null);
+            player.setUpdatedAt(LocalDateTime.now());
+            playerRepository.save(player);
+        });
     }
 
     private AuthResponseDto createSession(Player player) {
-        removeExpiredSessions();
         byte[] tokenBytes = new byte[TOKEN_BYTES];
         secureRandom.nextBytes(tokenBytes);
         String rawToken = Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime expiresAt = now.plusDays(SESSION_DAYS);
 
-        playerSessionRepository.save(PlayerSession.builder()
-                .player(player)
-                .tokenHash(hashToken(rawToken))
-                .createdAt(now)
-                .expiresAt(expiresAt)
-                .build());
+        player.setSessionTokenHash(hashToken(rawToken));
+        player.setSessionExpiresAt(expiresAt);
+        player.setUpdatedAt(now);
+        playerRepository.save(player);
 
         return AuthResponseDto.builder()
                 .accessToken(rawToken)

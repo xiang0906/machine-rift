@@ -31,7 +31,12 @@ class GameRecordRepositoryTest {
                 .username("alice")
                 .passwordHash("test-password-hash")
                 .level(1)
+                .experience(0)
+                .gold(0)
+                .completedStages(0)
+                .unlockedTowerCount(1)
                 .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build());
         Stage stage = stageRepository.save(Stage.builder()
                 .stageName("Stage 1")

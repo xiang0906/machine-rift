@@ -27,7 +27,7 @@ Machine Rift 是一款以瀏覽器 Canvas 呈現的塔防遊戲。Spring Boot �
 | 密碼 | Spring Security Crypto、BCrypt |
 | 正式資料庫 | MySQL |
 | 測試資料庫 | H2（MySQL mode） |
-| Migration | Flyway V1～V13 |
+| Migration | Flyway V1～V14 |
 | API 文件 | springdoc-openapi／Swagger UI |
 | 前端 | 單一 HTML、Canvas 2D |
 | 建置 | Maven Wrapper |
@@ -68,7 +68,8 @@ MySQL / H2
 - 玩家顯示名稱不分大小寫且不可重複。
 - 帳號長度為 3～50 個字元，可使用特殊符號，但不可包含空白或控制字元。
 - 密碼長度為 8～72 個字元，資料庫只保存 BCrypt 雜湊。
-- 登入後產生 30 天有效的 Session；資料庫保存 Token 的 SHA-256 雜湊。
+- 登入後產生 30 天有效的 Session；Token 的 SHA-256 雜湊保存在 `player`。
+- 每位玩家只保留一個有效 Session，重新登入會取代前一個登入狀態。
 - 登出會撤銷目前 Session。
 - 玩家進度、戰績寫入與排行榜需要 Bearer Token。
 - 玩家不可讀寫其他玩家的私人進度或代替其他玩家寫入戰績。
@@ -134,15 +135,12 @@ MySQL / H2
 
 ## 7. 資料庫
 
-專案共有 11 張業務資料表，另有 Flyway 的 `flyway_schema_history`：
+專案共有 8 張業務資料表，另有 Flyway 的 `flyway_schema_history`：
 
 | 資料表 | 責任 |
 | --- | --- |
-| `player` | 帳號、密碼雜湊、顯示名稱與等級 |
-| `player_session` | 登入 Token 雜湊與到期時間 |
-| `player_progress` | 經驗、金幣與完成關卡數 |
+| `player` | 帳號、密碼、總進度、塔解鎖數量與目前登入 Session |
 | `player_stage_progress` | 關卡解鎖、完成次數與個人最佳 |
-| `player_tower_unlock` | 玩家已解鎖的塔 |
 | `stage` | 關卡基本資料 |
 | `stage_path` | 關卡路徑節點與順序 |
 | `stage_wave` | 波次、敵人、數量與生成間隔 |
@@ -150,8 +148,9 @@ MySQL / H2
 | `enemy` | 敵人生命、速度與擊殺獎勵 |
 | `game_record` | 每場遊戲的分數、勝敗與時間 |
 
-目前表數與功能需求相符。若日後要縮減，可考慮將 `player_progress` 合併進 `player`；
-其餘關聯表負責一對多或多對多資料，不建議只為減少表數而合併。
+V14 將 `player_progress`、`player_session`、`player_tower_unlock` 合併至 `player`。
+塔依造價順序解鎖，因此只保存解鎖數量即可還原玩家目前可使用的塔；每關解鎖與個人最佳
+仍由 `player_stage_progress` 保存。
 
 ## 8. API 現況
 
@@ -183,7 +182,7 @@ MySQL / H2
 
 ## 10. 測試與品質
 
-目前自動測試共 13 項，涵蓋：
+目前自動測試共 15 項，涵蓋：
 
 - Spring Boot 與 Flyway 啟動
 - 種子資料數量與路線唯一性
@@ -192,6 +191,8 @@ MySQL / H2
 - 玩家進度、個人最佳與解鎖
 - 排行榜登入權限
 - 戰績寫入、關卡鎖定與排行榜排序
+- V13 升級 V14 時的進度、塔解鎖數量與最新 Session 搬移
+- 最終資料庫只保留八張業務資料表
 
 最近一次完整測試、JavaScript 語法檢查與 Maven 打包皆通過。
 

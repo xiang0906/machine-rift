@@ -41,6 +41,27 @@ public class Player {
     @Column(name = "level", nullable = false)
     private Integer level;
 
+    @Column(name = "experience", nullable = false)
+    private Integer experience;
+
+    @Column(name = "gold", nullable = false)
+    private Integer gold;
+
+    @Column(name = "completed_stages", nullable = false)
+    private Integer completedStages;
+
+    @Column(name = "unlocked_tower_count", nullable = false)
+    private Integer unlockedTowerCount;
+
+    @Column(name = "session_token_hash", unique = true, length = 64)
+    private String sessionTokenHash;
+
+    @Column(name = "session_expires_at")
+    private LocalDateTime sessionExpiresAt;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 }

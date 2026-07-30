@@ -2,7 +2,6 @@ package com.machinerift.machine_rift.controller;
 
 import com.machinerift.machine_rift.dto.PlayerResponseDto;
 import com.machinerift.machine_rift.exception.AuthenticationException;
-import com.machinerift.machine_rift.exception.ResourceConflictException;
 import com.machinerift.machine_rift.service.PlayerService;
 import com.machinerift.machine_rift.service.PlayerProgressService;
 import com.machinerift.machine_rift.service.AuthService;
@@ -16,7 +15,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -77,14 +75,12 @@ class PlayerControllerTest {
     }
 
     @Test
-    void shouldReturnConflictWhenDeletingPlayerWithGameRecords() throws Exception {
-        doThrow(new ResourceConflictException("Cannot delete player with existing game records."))
-                .when(playerService).deletePlayer(1L);
-
+    void shouldReturnNotFoundForRemovedPlayerDeleteApi() throws Exception {
         mockMvc.perform(delete("/api/players/1")
                         .header("Authorization", "Bearer test-token"))
-                .andExpect(status().isConflict())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Cannot delete player with existing game records."));
+                .andExpect(jsonPath("$.message").value("找不到指定的 API 或資源"));
     }
+
 }

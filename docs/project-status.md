@@ -1,6 +1,6 @@
 # Machine Rift 專案現況
 
-> 更新日期：2026-07-23  
+> 更新日期：2026-07-30
 > 階段：可遊玩的全端 MVP
 
 ## 1. 專案定位
@@ -159,15 +159,16 @@ MySQL / H2
 | --- | --- |
 | 帳號 | `POST /api/auth/register`、`POST /api/auth/login` |
 | Session | `GET /api/auth/me`、`POST /api/auth/logout` |
-| 玩家 | `GET /api/players`、`GET /api/players/{id}` |
+| 玩家 | `GET /api/players` |
 | 私人進度 | `GET /api/players/{id}/progress` |
-| 玩家維護 | `PUT /api/players/{id}`、`DELETE /api/players/{id}` |
-| 關卡 | `/api/stages`、`/api/stages/{id}` |
-| 防禦塔 | `/api/towers`、`/api/towers/{id}` |
-| 戰績 | `POST /api/game-records`、`GET /api/game-records`、`GET /api/game-records/{id}` |
+| 關卡 | `GET /api/stages` |
+| 防禦塔 | `GET /api/towers` |
+| 戰績 | `POST /api/game-records` |
 | 排行榜 | `GET /api/rankings` |
 
-所有回應使用統一的 `ApiResponse` 格式。完整 API 可在 `/swagger-ui.html` 查看。
+目前共 10 支 API，皆為前端實際使用的核心端點。未使用的玩家維護、關卡／防禦塔後台 CRUD、
+單筆查詢與戰績查詢端點已從 Controller 移除；底層 Service 暫時保留，作為後續程式碼收斂的緩衝。
+所有回應使用統一的 `ApiResponse` 格式，完整 API 可在 `/swagger-ui.html` 查看。
 
 ## 9. 前端現況
 
@@ -199,8 +200,8 @@ MySQL / H2
 
 - 前端集中在單一 `index.html`，已超過 1300 行；功能繼續增加前應拆分 CSS 與 JavaScript。
 - 目前沒有完整的 Spring Security Filter Chain，權限由 Controller 呼叫 `AuthService` 驗證。
-- `GET /api/players`、`GET /api/game-records` 等讀取 API 目前仍是公開端點。
-- 關卡與塔的寫入 API 尚未區分管理員角色。
+- `GET /api/players` 目前仍是公開端點，供排行榜將玩家 ID 對應成名稱。
+- Controller 已收斂為核心流程，但 Service、DTO 與 Mapper 仍保留部分已無公開端點呼叫的方法。
 - 敵人只有生命、速度與獎勵，尚未支援護甲、緩速抗性或特殊技能。
 - 防禦塔只有基本單體攻擊，尚未支援升級、範圍傷害、緩速或減益。
 - 沒有密碼重設、電子郵件驗證、限流與登入失敗鎖定。
@@ -208,9 +209,9 @@ MySQL / H2
 
 ## 12. 建議後續順序
 
-1. 補上 Spring Security Filter Chain 與管理員權限。
+1. 移除已無 Controller 使用的 Service、DTO 與 Mapper 方法。
 2. 將前端拆分成 `styles.css`、API／狀態模組與遊戲引擎模組。
-3. 將排行榜彙整、前十名與分頁移到後端。
-4. 增加塔升級、範圍攻擊與敵人特殊能力。
+3. 將排行榜彙整、前十名與分頁移到後端，避免公開完整玩家清單。
+4. 補上 Spring Security Filter Chain。
 5. 增加 CI，讓 GitHub Push／Pull Request 自動執行測試。
 6. 補上密碼重設與登入安全機制。

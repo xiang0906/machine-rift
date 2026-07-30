@@ -93,16 +93,16 @@ class MachineRiftApplicationTests {
 
 	@Test
 	void stageApiReturnsDatabaseDrivenPathAndWaves() throws Exception {
-		mockMvc.perform(get("/api/stages/1"))
+		mockMvc.perform(get("/api/stages"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.data.path.length()").value(4))
-				.andExpect(jsonPath("$.data.path[0].pointOrder").value(1))
-				.andExpect(jsonPath("$.data.path[0].gridCol").value(0))
-				.andExpect(jsonPath("$.data.path[0].gridRow").value(2))
-				.andExpect(jsonPath("$.data.waves.length()").value(2))
-				.andExpect(jsonPath("$.data.waves[0].enemy.enemyName").value("偵察機"))
-				.andExpect(jsonPath("$.data.waves[0].enemy.health").value(40))
-				.andExpect(jsonPath("$.data.waves[0].spawnIntervalMs").value(900));
+				.andExpect(jsonPath("$.data[0].path.length()").value(4))
+				.andExpect(jsonPath("$.data[0].path[0].pointOrder").value(1))
+				.andExpect(jsonPath("$.data[0].path[0].gridCol").value(0))
+				.andExpect(jsonPath("$.data[0].path[0].gridRow").value(2))
+				.andExpect(jsonPath("$.data[0].waves.length()").value(2))
+				.andExpect(jsonPath("$.data[0].waves[0].enemy.enemyName").value("偵察機"))
+				.andExpect(jsonPath("$.data[0].waves[0].enemy.health").value(40))
+				.andExpect(jsonPath("$.data[0].waves[0].spawnIntervalMs").value(900));
 	}
 
 	@Test

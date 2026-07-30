@@ -122,24 +122,13 @@ Base path：`/api`
 | 帳號 | GET | `/auth/me` | 以 Bearer token 取得目前玩家 |
 | 帳號 | POST | `/auth/logout` | 登出並撤銷目前 token |
 | 玩家 | GET | `/players` | 取得所有玩家 |
-| 玩家 | GET | `/players/{id}` | 取得單一玩家 |
 | 玩家 | GET | `/players/{id}/progress` | 取得本人等級、資產、解鎖內容與各關最佳戰績（需登入） |
-| 玩家 | PUT | `/players/{id}` | 更新本人玩家資料（需登入） |
-| 玩家 | DELETE | `/players/{id}` | 刪除本人帳號（需登入；有戰績會被拒絕） |
 | 關卡 | GET | `/stages` | 取得所有關卡 |
-| 關卡 | GET | `/stages/{id}` | 取得單一關卡 |
-| 關卡 | POST | `/stages` | 建立關卡 |
-| 關卡 | PUT | `/stages/{id}` | 更新關卡 |
-| 關卡 | DELETE | `/stages/{id}` | 刪除關卡（有戰績會被拒絕） |
 | 塔 | GET | `/towers` | 取得所有塔 |
-| 塔 | GET | `/towers/{id}` | 取得單一塔 |
-| 塔 | POST | `/towers` | 建立塔 |
-| 塔 | PUT | `/towers/{id}` | 更新塔 |
-| 塔 | DELETE | `/towers/{id}` | 刪除塔 |
 | 戰績 | POST | `/game-records` | 儲存本人的對戰紀錄（需登入） |
-| 戰績 | GET | `/game-records` | 取得所有戰績 |
-| 戰績 | GET | `/game-records/{id}` | 取得單一戰績 |
 | 排行榜 | GET | `/rankings` | 依分數排序的戰績列表（需登入） |
+
+目前共保留 10 支前端實際使用的 API；未被遊戲流程使用的單筆查詢與後台 CRUD 端點已移除。
 
 所有回應都包在統一格式中：
 

@@ -65,8 +65,29 @@ class GameRecordControllerTest {
                                 }
                                 """))
                 .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.message").value("戰績儲存成功"))
                 .andExpect(jsonPath("$.data.playerId").value(7))
                 .andExpect(jsonPath("$.data.stageId").value(2));
+    }
+
+    @Test
+    void shouldReturnChineseGameRecordValidationMessages() throws Exception {
+        mockMvc.perform(post("/api/game-records")
+                        .header("Authorization", "Bearer test-token")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "score": -1,
+                                  "result": "DRAW",
+                                  "playTime": -1
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("輸入資料有誤"))
+                .andExpect(jsonPath("$.data.stageId").value("請選擇關卡"))
+                .andExpect(jsonPath("$.data.score").value("分數不可小於 0"))
+                .andExpect(jsonPath("$.data.result").value("遊戲結果只能是 WIN 或 LOSE"))
+                .andExpect(jsonPath("$.data.playTime").value("遊戲時間不可小於 0"));
     }
 
     @Test
@@ -88,6 +109,7 @@ class GameRecordControllerTest {
         mockMvc.perform(get("/api/rankings")
                         .header("Authorization", "Bearer test-token"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("已取得排行榜"))
                 .andExpect(jsonPath("$.data.participantCount").value(3))
                 .andExpect(jsonPath("$.data.totalGameCount").value(8))
                 .andExpect(jsonPath("$.data.entries[0].rank").value(1))

@@ -120,6 +120,7 @@ class MachineRiftApplicationTests {
 	void stageApiReturnsDatabaseDrivenPathAndWaves() throws Exception {
 		mockMvc.perform(get("/api/stages"))
 				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.message").value("已取得關卡列表"))
 				.andExpect(jsonPath("$.data[0].path.length()").value(4))
 				.andExpect(jsonPath("$.data[0].path[0].pointOrder").value(1))
 				.andExpect(jsonPath("$.data[0].path[0].gridCol").value(0))
@@ -128,6 +129,10 @@ class MachineRiftApplicationTests {
 				.andExpect(jsonPath("$.data[0].waves[0].enemy.enemyName").value("偵察機"))
 				.andExpect(jsonPath("$.data[0].waves[0].enemy.health").value(40))
 				.andExpect(jsonPath("$.data[0].waves[0].spawnIntervalMs").value(900));
+
+		mockMvc.perform(get("/api/towers"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.message").value("已取得防禦塔列表"));
 	}
 
 	@Test
@@ -142,11 +147,17 @@ class MachineRiftApplicationTests {
 								}
 								"""))
 				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.message").value("帳號建立成功"))
 				.andReturn()
 				.getResponse()
 				.getContentAsString();
 		JsonNode registerJson = objectMapper.readTree(registerResponse);
 		String accessToken = registerJson.path("data").path("accessToken").asText();
+
+		mockMvc.perform(get("/api/auth/me")
+						.header("Authorization", "Bearer " + accessToken))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.message").value("已取得目前玩家資料"));
 
 		mockMvc.perform(get("/api/rankings"))
 				.andExpect(status().isUnauthorized())
@@ -191,7 +202,8 @@ class MachineRiftApplicationTests {
 
 		mockMvc.perform(post("/api/auth/logout")
 						.header("Authorization", "Bearer " + accessToken))
-				.andExpect(status().isOk());
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.message").value("登出成功"));
 
 		mockMvc.perform(get("/api/players/me/progress")
 						.header("Authorization", "Bearer " + accessToken))
@@ -206,6 +218,7 @@ class MachineRiftApplicationTests {
 								}
 								"""))
 				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.message").value("登入成功"))
 				.andReturn()
 				.getResponse()
 				.getContentAsString();

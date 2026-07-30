@@ -66,6 +66,7 @@ class PlayerControllerTest {
         mockMvc.perform(get("/api/players/me/progress")
                         .header("Authorization", "Bearer test-token"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("已取得玩家進度"))
                 .andExpect(jsonPath("$.data.playerId").value(5))
                 .andExpect(jsonPath("$.data.level").value(3));
     }

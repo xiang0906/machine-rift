@@ -171,6 +171,7 @@ V14 將 `player_progress`、`player_session`、`player_tower_unlock` 合併至 `
 私人進度與戰績寫入的玩家身分完全由 Bearer Token 決定；進度網址與戰績 request
 都不再接收 `playerId`。
 所有回應使用統一的 `ApiResponse` 格式，完整 API 可在 `/swagger-ui.html` 查看。
+Controller 成功訊息、DTO 驗證訊息及 Service 業務錯誤皆統一使用中文，前端可直接顯示。
 
 ## 9. 前端現況
 
@@ -201,7 +202,7 @@ V14 將 `player_progress`、`player_session`、`player_tower_unlock` 合併至 `
 
 ## 10. 測試與品質
 
-目前自動測試共 19 項，涵蓋：
+目前自動測試共 22 項，涵蓋：
 
 - Spring Boot 與 Flyway 啟動
 - 種子資料數量與路線唯一性
@@ -211,6 +212,7 @@ V14 將 `player_progress`、`player_session`、`player_tower_unlock` 合併至 `
 - 舊玩家 ID 進度網址已停用
 - 排行榜登入權限、後端彙整與回應格式
 - 戰績寫入、關卡鎖定、每位玩家最佳戰績與前十名限制
+- API 中文成功訊息、欄位驗證與業務錯誤
 - V13 升級 V14 時的進度、塔解鎖數量與最新 Session 搬移
 - 最終資料庫只保留八張業務資料表
 
@@ -230,6 +232,6 @@ V14 將 `player_progress`、`player_session`、`player_tower_unlock` 合併至 `
 
 1. 增加 CI，讓 GitHub Push／Pull Request 自動執行測試。
 2. 視課程需求補上 Spring Security Filter Chain。
-3. 統一剩餘 DTO 與 Service 的中文驗證訊息。
-4. 視後續規模再考慮排行榜分頁或 ES Modules。
-5. 補上簡短的 Demo 操作與 API 展示腳本。
+3. 補上簡短的 Demo 操作與 API 展示腳本。
+4. 將開發用 SQL 日誌與正式環境設定拆成不同 Profile。
+5. 視後續規模再考慮排行榜分頁或 ES Modules。

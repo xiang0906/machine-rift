@@ -28,7 +28,7 @@ public class TowerController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<TowerResponseDto>>> getAllTowers() {
-        return ResponseEntity.ok(ApiResponse.success("Towers retrieved successfully.", towerService.getAllTowers()));
+        return ResponseEntity.ok(ApiResponse.success("已取得防禦塔列表", towerService.getAllTowers()));
     }
 
 }

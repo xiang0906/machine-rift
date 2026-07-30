@@ -31,7 +31,7 @@ public class PlayerController {
             @RequestHeader(value = "Authorization", required = false) String authorization) {
         Player player = authService.requirePlayer(authorization);
         return ResponseEntity.ok(ApiResponse.success(
-                "Player progress retrieved successfully.",
+                "已取得玩家進度",
                 playerProgressService.getProgress(player)));
     }
 

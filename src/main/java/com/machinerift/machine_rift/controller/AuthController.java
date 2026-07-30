@@ -30,20 +30,20 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponseDto>> register(
             @Valid @RequestBody AuthRegisterRequestDto request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Account registered successfully.", authService.register(request)));
+                .body(ApiResponse.success("帳號建立成功", authService.register(request)));
     }
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponseDto>> login(
             @Valid @RequestBody AuthLoginRequestDto request) {
-        return ResponseEntity.ok(ApiResponse.success("Login successful.", authService.login(request)));
+        return ResponseEntity.ok(ApiResponse.success("登入成功", authService.login(request)));
     }
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<PlayerResponseDto>> me(
             @RequestHeader(value = "Authorization", required = false) String authorization) {
         return ResponseEntity.ok(ApiResponse.success(
-                "Current player retrieved successfully.",
+                "已取得目前玩家資料",
                 playerMapper.toResponseDto(authService.requirePlayer(authorization))));
     }
 
@@ -51,6 +51,6 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> logout(
             @RequestHeader(value = "Authorization", required = false) String authorization) {
         authService.logout(authorization);
-        return ResponseEntity.ok(ApiResponse.success("Logout successful.", null));
+        return ResponseEntity.ok(ApiResponse.success("登出成功", null));
     }
 }

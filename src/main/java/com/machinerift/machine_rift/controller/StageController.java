@@ -28,7 +28,7 @@ public class StageController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<StageResponseDto>>> getAllStages() {
-        return ResponseEntity.ok(ApiResponse.success("Stages retrieved successfully.", stageService.getAllStages()));
+        return ResponseEntity.ok(ApiResponse.success("已取得關卡列表", stageService.getAllStages()));
     }
 
 }

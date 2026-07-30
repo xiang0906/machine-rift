@@ -18,19 +18,19 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class GameRecordRequestDto {
 
-    @NotNull(message = "Stage id is required")
+    @NotNull(message = "請選擇關卡")
     private Long stageId;
 
-    @NotNull(message = "Score is required")
-    @Min(value = 0, message = "Score must be non-negative")
+    @NotNull(message = "請提供分數")
+    @Min(value = 0, message = "分數不可小於 0")
     private Integer score;
 
-    @NotBlank(message = "Result is required")
+    @NotBlank(message = "請提供遊戲結果")
     @Pattern(regexp = "WIN|LOSE", flags = Pattern.Flag.CASE_INSENSITIVE,
-            message = "Result must be WIN or LOSE")
+            message = "遊戲結果只能是 WIN 或 LOSE")
     private String result;
 
-    @NotNull(message = "Play time is required")
-    @Min(value = 0, message = "Play time must be non-negative")
+    @NotNull(message = "請提供遊戲時間")
+    @Min(value = 0, message = "遊戲時間不可小於 0")
     private Integer playTime;
 }

@@ -136,7 +136,7 @@ Base path：`/api`
 ```json
 {
   "success": true,
-  "message": "Ranking retrieved successfully.",
+  "message": "已取得排行榜",
   "data": { ... }
 }
 ```
@@ -155,7 +155,7 @@ request 中傳送 `playerId`，因此不能指定其他玩家的身分。
 ```json
 {
   "success": true,
-  "message": "Ranking retrieved successfully.",
+  "message": "已取得排行榜",
   "data": {
     "participantCount": 3,
     "totalGameCount": 8,

@@ -46,10 +46,10 @@ public class GameRecordService {
     public GameRecordResponseDto saveGameRecord(
             GameRecordRequestDto requestDto, Player player) {
         Stage stage = stageRepository.findById(requestDto.getStageId())
-                .orElseThrow(() -> new ResourceNotFoundException("Stage not found with id: " + requestDto.getStageId()));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "找不到指定的關卡，ID：" + requestDto.getStageId()));
         if (!playerProgressService.isStageUnlocked(player, stage)) {
-            throw new ResourceConflictException(
-                    "Stage is locked for player: " + player.getPlayerId());
+            throw new ResourceConflictException("此關卡尚未解鎖");
         }
 
         GameRecord savedRecord = gameRecordRepository.save(gameRecordMapper.toEntity(requestDto, player, stage));

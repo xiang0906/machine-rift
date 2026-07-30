@@ -141,7 +141,7 @@ public class AuthService {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             return HexFormat.of().formatHex(digest.digest(rawToken.getBytes(StandardCharsets.UTF_8)));
         } catch (NoSuchAlgorithmException exception) {
-            throw new IllegalStateException("SHA-256 is unavailable.", exception);
+            throw new IllegalStateException("無法使用 SHA-256 雜湊演算法", exception);
         }
     }
 }

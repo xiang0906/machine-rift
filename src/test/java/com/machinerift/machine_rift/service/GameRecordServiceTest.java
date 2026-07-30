@@ -6,6 +6,8 @@ import com.machinerift.machine_rift.dto.RankingResponseDto;
 import com.machinerift.machine_rift.entity.GameRecord;
 import com.machinerift.machine_rift.entity.Player;
 import com.machinerift.machine_rift.entity.Stage;
+import com.machinerift.machine_rift.exception.ResourceConflictException;
+import com.machinerift.machine_rift.exception.ResourceNotFoundException;
 import com.machinerift.machine_rift.mapper.GameRecordMapper;
 import com.machinerift.machine_rift.repository.GameRecordRepository;
 import com.machinerift.machine_rift.repository.StageRepository;
@@ -20,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -67,6 +70,36 @@ class GameRecordServiceTest {
         assertEquals(10L, response.getRecordId());
         assertEquals(1L, savedRecord.getValue().getPlayer().getPlayerId());
         assertEquals(2L, savedRecord.getValue().getStage().getStageId());
+    }
+
+    @Test
+    void shouldReturnChineseMessageWhenStageDoesNotExist() {
+        Player player = player(1L);
+        GameRecordRequestDto request = GameRecordRequestDto.builder()
+                .stageId(99L).score(900).result("WIN").playTime(120).build();
+        when(stageRepository.findById(99L)).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> gameRecordService.saveGameRecord(request, player));
+
+        assertEquals("找不到指定的關卡，ID：99", exception.getMessage());
+    }
+
+    @Test
+    void shouldReturnChineseMessageWhenStageIsLocked() {
+        Player player = player(1L);
+        Stage stage = stage(2L);
+        GameRecordRequestDto request = GameRecordRequestDto.builder()
+                .stageId(2L).score(900).result("WIN").playTime(120).build();
+        when(stageRepository.findById(2L)).thenReturn(Optional.of(stage));
+        when(playerProgressService.isStageUnlocked(player, stage)).thenReturn(false);
+
+        ResourceConflictException exception = assertThrows(
+                ResourceConflictException.class,
+                () -> gameRecordService.saveGameRecord(request, player));
+
+        assertEquals("此關卡尚未解鎖", exception.getMessage());
     }
 
     @Test

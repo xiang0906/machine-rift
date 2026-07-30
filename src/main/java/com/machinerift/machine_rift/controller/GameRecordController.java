@@ -42,7 +42,7 @@ public class GameRecordController {
         Player player = authService.requirePlayer(authorization);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
-                        "Game record saved successfully.",
+                        "戰績儲存成功",
                         gameRecordService.saveGameRecord(requestDto, player)));
     }
 
@@ -55,6 +55,6 @@ public class GameRecordController {
     public ResponseEntity<ApiResponse<RankingResponseDto>> getRankings(
             @RequestHeader(value = "Authorization", required = false) String authorization) {
         authService.requirePlayer(authorization);
-        return ResponseEntity.ok(ApiResponse.success("Ranking retrieved successfully.", gameRecordService.getRankings()));
+        return ResponseEntity.ok(ApiResponse.success("已取得排行榜", gameRecordService.getRankings()));
     }
 }

@@ -57,6 +57,13 @@ const HIT_RADIUS = 8;
 let game = null;
 let rafId = null;
 
+function stopCurrentGame() {
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = null;
+  game = null;
+  document.getElementById('overlay-result').hidden = true;
+}
+
 function startGame() {
   const stage = state.selectedStage;
   const route = routeForStage(stage);
@@ -110,10 +117,8 @@ document.getElementById('btnQuitGame').addEventListener('click', () => {
     }
     return;
   }
-  if (rafId) cancelAnimationFrame(rafId);
-  rafId = null;
-  game = null;
-  showScreen('stages');
+  stopCurrentGame();
+  showScreen('stages', { replaceRoute: true });
 });
 
 document.getElementById('towerSortSelect').addEventListener('change', event => {
@@ -613,9 +618,6 @@ async function endGame(result) {
 }
 
 document.getElementById('btnPlayAgain').addEventListener('click', () => {
-  document.getElementById('overlay-result').hidden = true;
-  if (rafId) cancelAnimationFrame(rafId);
-  rafId = null;
-  game = null;
-  showScreen('stages');
+  stopCurrentGame();
+  showScreen('stages', { replaceRoute: true });
 });

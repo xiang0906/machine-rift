@@ -6,10 +6,42 @@ const screens = {
   ranking: document.getElementById('screen-ranking'),
   game: document.getElementById('screen-game'),
 };
-function showScreen(name) {
+
+const SCREEN_ROUTES = {
+  start: '/login',
+  register: '/register',
+  stages: '/stages',
+  ranking: '/ranking',
+  game: '/game',
+};
+const ROUTE_SCREENS = Object.fromEntries(
+  Object.entries(SCREEN_ROUTES).map(([screenName, route]) => [route, screenName])
+);
+let currentScreenName = 'start';
+
+function screenNameFromHash() {
+  const route = window.location.hash.replace(/^#/, '') || '/login';
+  return ROUTE_SCREENS[route] || null;
+}
+
+function syncRouteForScreen(name, replaceRoute = false) {
+  const targetHash = `#${SCREEN_ROUTES[name]}`;
+  if (window.location.hash === targetHash) return;
+  const historyMethod = replaceRoute ? 'replaceState' : 'pushState';
+  window.history[historyMethod](null, '', targetHash);
+}
+
+function showScreen(name, { updateRoute = true, replaceRoute = false } = {}) {
+  if (!screens[name]) return;
+  if (currentScreenName === 'game' && name !== 'game'
+      && typeof stopCurrentGame === 'function') {
+    stopCurrentGame();
+  }
   Object.values(screens).forEach(s => s.hidden = true);
   screens[name].hidden = false;
+  currentScreenName = name;
   document.body.classList.toggle('game-active', name === 'game');
+  if (updateRoute) syncRouteForScreen(name, replaceRoute);
   if (name === 'game') requestAnimationFrame(() => window.scrollTo(0, 0));
 }
 
@@ -60,7 +92,7 @@ function clearSession() {
   state.progress = null;
 }
 
-async function enterGame(authData) {
+async function enterGame(authData, { updateRoute = true } = {}) {
   if (authData?.accessToken) {
     state.accessToken = authData.accessToken;
     localStorage.setItem('machineRiftAccessToken', authData.accessToken);
@@ -72,7 +104,7 @@ async function enterGame(authData) {
   document.getElementById('currentPlayerName').textContent = player.playerName;
   await loadPlayerContent();
   renderStageList();
-  showScreen('stages');
+  showScreen('stages', { updateRoute });
 }
 
 async function loadPlayerContent() {

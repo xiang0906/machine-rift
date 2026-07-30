@@ -73,7 +73,7 @@ Windows PowerShell：
 .\mvnw.cmd spring-boot:run
 ```
 
-啟動後瀏覽器開啟 `http://localhost:8080/` 即可看到遊戲畫面。
+啟動後瀏覽器開啟 `http://localhost:8080/#/login` 即可看到登入畫面。
 
 ### 執行測試
 
@@ -182,6 +182,11 @@ src/main/resources/static/
 
 五支 JavaScript 依上述責任拆分，並由 `index.html` 依相依順序載入。敘事內容只存在
 前端靜態檔案，不增加 API 或資料表。
+
+五個畫面使用單頁 hash 路由，各自對應 `#/login`、`#/register`、`#/stages`、
+`#/ranking` 與 `#/game`。切換畫面時網址會同步更新，也支援瀏覽器上一頁／下一頁。
+關卡、排行榜與遊戲頁需要登入；直接開啟受保護網址時會回到登入頁。戰鬥狀態只存在
+瀏覽器記憶體，因此重新整理 `#/game` 不會還原本局，而會安全返回 `#/stages`。
 
 遊玩流程：
 1. 建立帳號或登入 → `POST /api/auth/register`／`POST /api/auth/login`

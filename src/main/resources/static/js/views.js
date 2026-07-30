@@ -242,16 +242,68 @@ document.getElementById('btnCancelBriefing').addEventListener('click', () => {
   state.selectedStage = null;
 });
 
+async function applyRouteFromLocation() {
+  const requestedScreen = screenNameFromHash();
+  const authenticated = Boolean(state.accessToken && state.playerId);
+
+  if (!requestedScreen) {
+    showScreen(authenticated ? 'stages' : 'start', { replaceRoute: true });
+    return;
+  }
+
+  if (!authenticated) {
+    const publicScreen = requestedScreen === 'register' ? 'register' : 'start';
+    showScreen(publicScreen, {
+      updateRoute: true,
+      replaceRoute: requestedScreen !== publicScreen,
+    });
+    return;
+  }
+
+  if (requestedScreen === 'start' || requestedScreen === 'register') {
+    showScreen('stages', { replaceRoute: true });
+    return;
+  }
+
+  if (requestedScreen === 'game' && !game) {
+    showScreen('stages', { replaceRoute: true });
+    return;
+  }
+
+  if (requestedScreen === 'ranking') {
+    if (currentScreenName !== 'ranking') await openRanking();
+    return;
+  }
+
+  showScreen(requestedScreen, { updateRoute: false });
+}
+
+window.addEventListener('popstate', applyRouteFromLocation);
+window.addEventListener('hashchange', applyRouteFromLocation);
+
 // Restore the same player after refreshing or reopening the game.
 (async function restoreSession() {
-  if (!state.accessToken) return;
+  const requestedScreen = screenNameFromHash();
+  if (!state.accessToken) {
+    await applyRouteFromLocation();
+    return;
+  }
   const errEl = document.getElementById('startError');
   errEl.textContent = '正在恢復登入狀態...';
   try {
-    await enterGame(await api('GET', '/api/auth/me'));
+    await enterGame(await api('GET', '/api/auth/me'), { updateRoute: false });
     errEl.textContent = '';
+    if (requestedScreen === 'ranking') {
+      await openRanking();
+    } else {
+      showScreen('stages', {
+        updateRoute: true,
+        replaceRoute: requestedScreen !== 'stages',
+      });
+    }
   } catch (error) {
     clearSession();
     errEl.textContent = '登入已過期，請重新登入。';
+    showScreen('start', { replaceRoute: true });
   }
 })();

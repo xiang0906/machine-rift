@@ -88,6 +88,12 @@ async function loadPlayerContent() {
 
   state.progress = progress;
   state.stages = stages
+    .sort((left, right) => left.stageId - right.stageId)
     .map(stage => ({ ...stage, progress: stageProgressById.get(stage.stageId) }));
   state.towers = towers.filter(tower => unlockedTowerIds.has(tower.towerId));
+}
+
+function missionNumberForStage(stageId) {
+  const stageIndex = state.stages.findIndex(stage => stage.stageId === stageId);
+  return stageIndex >= 0 ? stageIndex + 1 : stageId;
 }

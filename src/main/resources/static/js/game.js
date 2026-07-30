@@ -69,7 +69,9 @@ function startGame() {
     towers: [],
     enemies: [],
     projectiles: [],
+    effects: [],
     selectedTowerType: null,
+    hoverCell: null,
     waveActive: false,
     spawned: 0,
     spawnedInWave: 0,
@@ -80,13 +82,18 @@ function startGame() {
     lastTs: null,
     startedAt: null,
     ended: false,
+    shakeUntil: 0,
+    victoryAt: null,
     route,
     pathCells: computePathCells(route),
     pathPoints: buildPathPoints(route),
   };
+  document.getElementById('gameMissionTitle').textContent =
+    `任務 ${String(missionNumberForStage(stage.stageId)).padStart(2, '0')}｜${stage.stageName}`;
   renderTowerPanel();
   updateHud();
-  document.getElementById('gameHint').textContent = '點選塔種後，點選地圖上非路徑格子建造。';
+  document.getElementById('gameHint').textContent =
+    '操作：選擇塔種 → 點擊非路徑格建造 → 完成配置後開始波次。';
   document.getElementById('btnStartWave').disabled = false;
   showScreen('game');
   draw();
@@ -95,6 +102,14 @@ function startGame() {
 }
 
 document.getElementById('btnQuitGame').addEventListener('click', () => {
+  const confirmationStartedAt = performance.now();
+  const shouldQuit = window.confirm('確定放棄本局？\n本局分數與進度不會保存。');
+  if (!shouldQuit) {
+    if (game?.startedAt) {
+      game.startedAt += performance.now() - confirmationStartedAt;
+    }
+    return;
+  }
   if (rafId) cancelAnimationFrame(rafId);
   rafId = null;
   game = null;
@@ -132,11 +147,17 @@ function renderTowerPanel() {
   const sortSelect = document.getElementById('towerSortSelect');
   sortSelect.value = state.towerSort;
   document.getElementById('towerCount').textContent = `已解鎖 ${state.towers.length} 座`;
-  panel.innerHTML = sortedTowers().map(t => `
-    <button class="tower-btn${game?.selectedTowerType === t.towerId ? ' selected' : ''}" data-id="${t.towerId}" style="border-color:${towerColor(t.towerType)}55">
+  panel.innerHTML = sortedTowers().map(t => {
+    const selected = game?.selectedTowerType === t.towerId;
+    const unaffordable = game && game.gold < t.cost;
+    return `
+    <button class="tower-btn${selected ? ' selected' : ''}${unaffordable ? ' unaffordable' : ''}" data-id="${t.towerId}" style="border-color:${towerColor(t.towerType)}55">
       <span class="tower-title">
         <b>${t.towerName}</b>
-        <span class="tower-role">${towerRoleLabel(t.towerType)}</span>
+        <span class="tower-status">
+          <span class="tower-role">${towerRoleLabel(t.towerType)}</span>
+          <span class="tower-selected-label">✓ 已選擇</span>
+        </span>
       </span>
       <span class="tower-details">
         <span class="tower-cost">${t.cost}G</span>
@@ -145,15 +166,29 @@ function renderTowerPanel() {
         <span>射程 ${t.attackRange}</span>
       </span>
     </button>
-  `).join('');
+  `;
+  }).join('');
   panel.querySelectorAll('.tower-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = Number(btn.dataset.id);
       game.selectedTowerType = game.selectedTowerType === id ? null : id;
+      const selectedTower = state.towers.find(t => t.towerId === game.selectedTowerType);
       panel.querySelectorAll('.tower-btn').forEach(b => {
         b.classList.toggle('selected', Number(b.dataset.id) === game.selectedTowerType);
       });
+      document.getElementById('gameHint').textContent = selectedTower
+        ? `已選擇「${selectedTower.towerName}」：將游標移到地圖，綠色可建造、紅色不可建造。`
+        : '請選擇一座防禦塔，再點擊非路徑格子建造。';
     });
+  });
+}
+
+function updateTowerAffordability() {
+  if (!game) return;
+  document.querySelectorAll('#towerPanel .tower-btn').forEach(button => {
+    const towerId = Number(button.dataset.id);
+    const tower = state.towers.find(item => item.towerId === towerId);
+    button.classList.toggle('unaffordable', Boolean(tower && game.gold < tower.cost));
   });
 }
 
@@ -179,18 +214,51 @@ function towerColor(type) {
   })[type] || '#4dd0e1';
 }
 
-canvas.addEventListener('click', (e) => {
-  if (!game || game.ended) return;
+function canvasCellFromPointer(event) {
   const rect = canvas.getBoundingClientRect();
   const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
-  const mx = (e.clientX - rect.left) * scaleX, my = (e.clientY - rect.top) * scaleY;
+  const mx = (event.clientX - rect.left) * scaleX;
+  const my = (event.clientY - rect.top) * scaleY;
   const col = Math.floor(mx / CELL), row = Math.floor(my / CELL);
-  if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
-  if (game.pathCells.has(col + ',' + row)) return;
-  if (!game.selectedTowerType) return;
-  if (game.towers.some(t => t.col === col && t.row === row)) return;
+  return col < 0 || col >= COLS || row < 0 || row >= ROWS ? null : { col, row };
+}
+
+function towerPlacementStatus(col, row) {
+  if (!game.selectedTowerType) return { valid: false, reason: '請先選擇防禦塔。' };
   const cfg = state.towers.find(t => t.towerId === game.selectedTowerType);
-  if (!cfg || game.gold < cfg.cost) return;
+  if (!cfg) return { valid: false, reason: '找不到選擇的防禦塔。' };
+  if (game.pathCells.has(col + ',' + row)) {
+    return { valid: false, cfg, reason: '敵人行進路徑不能建造。' };
+  }
+  if (game.towers.some(t => t.col === col && t.row === row)) {
+    return { valid: false, cfg, reason: '這個格子已經有防禦塔。' };
+  }
+  if (game.gold < cfg.cost) {
+    return { valid: false, cfg, reason: `金幣不足，建造需要 ${cfg.cost}G。` };
+  }
+  return { valid: true, cfg, reason: `可以建造「${cfg.towerName}」。` };
+}
+
+canvas.addEventListener('mousemove', event => {
+  if (!game || game.ended) return;
+  game.hoverCell = canvasCellFromPointer(event);
+});
+
+canvas.addEventListener('mouseleave', () => {
+  if (game) game.hoverCell = null;
+});
+
+canvas.addEventListener('click', event => {
+  if (!game || game.ended) return;
+  const cell = canvasCellFromPointer(event);
+  if (!cell) return;
+  const placement = towerPlacementStatus(cell.col, cell.row);
+  if (!placement.valid) {
+    document.getElementById('gameHint').textContent = placement.reason;
+    return;
+  }
+  const { col, row } = cell;
+  const cfg = placement.cfg;
   game.gold -= cfg.cost;
   game.towers.push({
     col, row,
@@ -198,6 +266,12 @@ canvas.addEventListener('click', (e) => {
     damage: cfg.damage, attackSpeed: cfg.attackSpeed, range: cfg.attackRange,
     cooldown: 0, name: cfg.towerName, type: cfg.towerType,
   });
+  game.selectedTowerType = null;
+  document.querySelectorAll('#towerPanel .tower-btn').forEach(button => {
+    button.classList.remove('selected');
+  });
+  document.getElementById('gameHint').textContent =
+    `「${cfg.towerName}」建造完成，剩餘 ${game.gold}G。請重新選塔以建造下一座。`;
   updateHud();
 });
 
@@ -207,6 +281,7 @@ document.getElementById('btnStartWave').addEventListener('click', () => {
   game.startedAt = performance.now();
   document.getElementById('btnStartWave').disabled = true;
   document.getElementById('gameHint').textContent = `第 1/${game.waves.length} 波進行中...敵人抵達基地會扣血。`;
+  updateHud();
 });
 
 function spawnEnemy(wave) {
@@ -277,6 +352,7 @@ function loop(ts) {
       if (e.pathIdx >= game.pathPoints.length - 1) {
         e.alive = false;
         game.baseHp--;
+        game.shakeUntil = performance.now() + 220;
         if (game.baseHp <= 0) endGame('LOSE');
       }
     });
@@ -301,10 +377,18 @@ function loop(ts) {
       const dx = p.target.x - p.x, dy = p.target.y - p.y, d = Math.hypot(dx, dy);
       if (d <= HIT_RADIUS) {
         p.target.hp -= p.damage;
+        p.target.hitFlashUntil = performance.now() + 90;
         if (p.target.hp <= 0) {
           p.target.alive = false;
           game.gold += p.target.rewardGold;
           game.score += p.target.rewardGold;
+          game.effects.push({
+            x: p.target.x,
+            y: p.target.y - p.target.radius,
+            text: `+${p.target.rewardGold}G`,
+            life: 900,
+            maxLife: 900,
+          });
         }
         p.dead = true;
       } else {
@@ -318,7 +402,10 @@ function loop(ts) {
         && game.spawnedInWave >= currentWave.enemyCount
         && game.enemies.length === 0) {
       if (game.waveIndex >= game.waves.length - 1) {
-        endGame('WIN');
+        game.waveActive = false;
+        game.victoryAt = ts + 550;
+        document.getElementById('gameHint').textContent =
+          '最後目標已清除，正在確認戰場狀態...';
       } else {
         game.waveIndex++;
         game.spawnedInWave = 0;
@@ -330,12 +417,27 @@ function loop(ts) {
     updateHud();
   }
 
+  game.effects.forEach(effect => {
+    effect.life -= dt;
+    effect.y -= 18 * dt / 1000;
+  });
+  game.effects = game.effects.filter(effect => effect.life > 0);
+
+  if (!game.ended && game.victoryAt != null && ts >= game.victoryAt) {
+    game.victoryAt = null;
+    endGame('WIN');
+  }
+
   draw();
   if (!game.ended) rafId = requestAnimationFrame(loop);
 }
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  if (game && performance.now() < game.shakeUntil) {
+    ctx.translate((Math.random() - 0.5) * 7, (Math.random() - 0.5) * 7);
+  }
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
       const onPath = game && game.pathCells.has(c + ',' + r);
@@ -388,6 +490,8 @@ function draw() {
     ctx.font = '10px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
     ctx.fillText('主堡', pl.x, pl.y - 21);
 
+    drawTowerPlacementPreview();
+
     game.towers.forEach(t => {
       ctx.fillStyle = towerColor(t.type);
       ctx.beginPath(); ctx.arc(t.x, t.y, 14, 0, Math.PI * 2); ctx.fill();
@@ -398,7 +502,7 @@ function draw() {
       const healthBarWidth = Math.max(24, e.radius * 2);
       const healthBarX = e.x - healthBarWidth / 2;
       const healthBarY = e.y - e.radius - 8;
-      ctx.fillStyle = enemyColor(e.name);
+      ctx.fillStyle = e.hitFlashUntil > performance.now() ? '#ffffff' : enemyColor(e.name);
       ctx.beginPath(); ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = 'rgba(255,255,255,0.2)';
       ctx.fillRect(healthBarX, healthBarY, healthBarWidth, 4);
@@ -409,16 +513,74 @@ function draw() {
       ctx.fillStyle = '#ffe082';
       ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); ctx.fill();
     });
+    game.effects.forEach(effect => {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, effect.life / 250);
+      ctx.fillStyle = '#ffd54f';
+      ctx.font = 'bold 13px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.shadowColor = '#000000';
+      ctx.shadowBlur = 4;
+      ctx.fillText(effect.text, effect.x, effect.y);
+      ctx.restore();
+    });
   }
+  ctx.restore();
+}
+
+function drawTowerPlacementPreview() {
+  if (!game.hoverCell || !game.selectedTowerType) return;
+  const { col, row } = game.hoverCell;
+  const placement = towerPlacementStatus(col, row);
+  if (!placement.cfg) return;
+
+  const x = col * CELL + CELL / 2;
+  const y = row * CELL + CELL / 2;
+  const previewColor = placement.valid ? '#69f0ae' : '#ff5252';
+
+  ctx.save();
+  ctx.fillStyle = placement.valid ? 'rgba(105,240,174,0.18)' : 'rgba(255,82,82,0.2)';
+  ctx.fillRect(col * CELL + 1, row * CELL + 1, CELL - 2, CELL - 2);
+  ctx.strokeStyle = previewColor;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(col * CELL + 2, row * CELL + 2, CELL - 4, CELL - 4);
+
+  ctx.fillStyle = placement.valid ? 'rgba(105,240,174,0.06)' : 'rgba(255,82,82,0.04)';
+  ctx.beginPath();
+  ctx.arc(x, y, placement.cfg.attackRange, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = placement.valid ? 'rgba(105,240,174,0.72)' : 'rgba(255,82,82,0.6)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.globalAlpha = 0.75;
+  ctx.fillStyle = towerColor(placement.cfg.towerType);
+  ctx.beginPath();
+  ctx.arc(x, y, 14, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
 }
 
 function updateHud() {
+  const displayedWave = game.waveActive || game.spawned > 0 ? game.waveIndex + 1 : 0;
+  const elapsedSeconds = game.startedAt
+    ? Math.floor((performance.now() - game.startedAt) / 1000)
+    : 0;
+  const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+  const remainingSeconds = elapsedSeconds % 60;
+  document.getElementById('hudWave').textContent = displayedWave === 0
+    ? `等待部署｜共 ${game.waves.length} 波`
+    : `第 ${displayedWave} / ${game.waves.length} 波`;
+  document.getElementById('hudTime').textContent =
+    `${String(elapsedMinutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+  document.getElementById('hudEnemies').textContent = game.spawned + '/' + game.enemyCount;
   document.getElementById('hudGold').textContent = game.gold;
   const hpEl = document.getElementById('hudHp');
   hpEl.textContent = game.baseHp;
   document.getElementById('hudHpWrap').classList.toggle('hp-low', game.baseHp <= 3);
   document.getElementById('hudScore').textContent = game.score;
-  document.getElementById('hudEnemies').textContent = game.spawned + '/' + game.enemyCount;
+  updateTowerAffordability();
 }
 
 async function endGame(result) {
@@ -430,6 +592,8 @@ async function endGame(result) {
 
   document.getElementById('resultTitle').textContent = result === 'WIN' ? '任務成功' : '任務失敗';
   document.getElementById('resultTitle').className = result === 'WIN' ? 'result-win' : 'result-lose';
+  document.getElementById('resultMessage').textContent =
+    resultStoryForStage(state.selectedStage.stageName, result);
   document.getElementById('resultDetail').textContent = `分數：${game.score}　用時：${playTime} 秒`;
   document.getElementById('overlay-result').hidden = false;
 

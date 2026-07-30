@@ -191,12 +191,21 @@ function renderStageList() {
       : `最佳 ${s.progress.bestScore} 分 / ${s.progress.bestPlayTime} 秒`;
     const buttonText = !unlocked ? '已鎖定' : ready ? '開始' : '尚未設定';
     return `
-    <div class="stage-card" data-id="${s.stageId}">
-      <div>
-        <div class="name">${s.stageName}</div>
-        <div class="meta">難度：${s.difficulty} · 敵人數：${s.enemyCount} · 波次：${s.waves?.length || 0} · 獎勵金幣：${s.rewardGold} · ${best}</div>
+    <div class="stage-card${unlocked ? '' : ' locked'}" data-id="${s.stageId}">
+      <div class="stage-card-header">
+        <div class="name">${escapeHtml(s.stageName)}</div>
+        <span class="difficulty">${escapeHtml(s.difficulty)}</span>
       </div>
-      <button class="btn-primary" ${canEnter ? '' : 'disabled'}>${buttonText}</button>
+      <div class="mission">${escapeHtml(storyForStage(s.stageName))}</div>
+      <div class="stage-stats">
+        <span>敵人 ${s.enemyCount}</span>
+        <span>波次 ${s.waves?.length || 0}</span>
+        <span>獎勵 ${s.rewardGold}G</span>
+      </div>
+      <div class="stage-card-footer">
+        <span class="stage-best">${best}</span>
+        <button class="btn-primary" ${canEnter ? '' : 'disabled'}>${buttonText}</button>
+      </div>
     </div>
   `;
   }).join('');
@@ -208,10 +217,30 @@ function renderStageList() {
           || !Array.isArray(stage.path) || stage.path.length < 2
           || !Array.isArray(stage.waves) || stage.waves.length === 0) return;
       state.selectedStage = stage;
-      startGame();
+      openMissionBriefing(stage);
     });
   });
 }
+
+function openMissionBriefing(stage) {
+  document.getElementById('briefingCode').textContent =
+    `任務 ${String(missionNumberForStage(stage.stageId)).padStart(2, '0')} · ${stage.difficulty}`;
+  document.getElementById('briefingTitle').textContent = stage.stageName;
+  document.getElementById('briefingStory').textContent = storyForStage(stage.stageName);
+  document.getElementById('briefingObjective').textContent =
+    `守住基地，擊退 ${stage.waves.length} 波、共 ${stage.enemyCount} 名敵人`;
+  document.getElementById('overlay-briefing').hidden = false;
+}
+
+document.getElementById('btnDeploy').addEventListener('click', () => {
+  document.getElementById('overlay-briefing').hidden = true;
+  startGame();
+});
+
+document.getElementById('btnCancelBriefing').addEventListener('click', () => {
+  document.getElementById('overlay-briefing').hidden = true;
+  state.selectedStage = null;
+});
 
 // Restore the same player after refreshing or reopening the game.
 (async function restoreSession() {

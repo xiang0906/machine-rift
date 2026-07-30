@@ -67,6 +67,18 @@
   }
   h2 { margin: 0 0 16px; font-size: 1.3rem; color: var(--accent); }
   p { color: var(--muted); line-height: 1.6; }
+  .world-story {
+    display: grid;
+    gap: 4px;
+    margin: 14px 0 22px;
+    padding: 14px 16px;
+    border-left: 3px solid var(--accent);
+    background: rgba(77, 208, 225, 0.07);
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+  .screen-intro { margin: -8px 0 16px; }
   .badge {
     display: inline-block;
     padding: 6px 12px;
@@ -102,20 +114,106 @@
   .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
   .error-text { color: var(--bad); min-height: 20px; font-size: 0.9rem; }
   .stage-list, .rank-list { display: grid; gap: 10px; margin-bottom: 16px; }
+  .stage-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stage-card {
     background: var(--panel2);
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 14px;
-    padding: 14px 16px;
+    padding: 14px;
     cursor: pointer;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    min-width: 0;
     transition: border-color 0.2s;
   }
   .stage-card:hover { border-color: var(--accent); }
-  .stage-card .name { font-weight: 700; }
-  .stage-card .meta { color: var(--muted); font-size: 0.85rem; }
+  .stage-card.locked { opacity: 0.68; }
+  .stage-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .stage-card .name {
+    overflow: hidden;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .stage-card .difficulty {
+    flex: 0 0 auto;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: rgba(77,208,225,0.12);
+    color: var(--accent);
+    font-size: 0.68rem;
+  }
+  .stage-card .mission {
+    color: #c7d4e5;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    min-height: 2.9em;
+    margin: 7px 0;
+  }
+  .stage-stats {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  .stage-stats span {
+    padding: 3px 7px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.06);
+    color: var(--muted);
+    font-size: 0.68rem;
+  }
+  .stage-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 11px;
+  }
+  .stage-best {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 0.7rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .stage-card-footer button {
+    flex: 0 0 auto;
+    padding: 7px 14px;
+    font-size: 0.78rem;
+  }
+  .operation-guide {
+    margin: 4px 0 16px;
+    border: 1px solid rgba(77,208,225,0.18);
+    border-radius: 14px;
+    background: rgba(77,208,225,0.06);
+  }
+  .operation-guide summary {
+    padding: 10px 14px;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+  .operation-guide ol {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px 24px;
+    margin: 0 14px 12px;
+    padding: 0 0 0 22px;
+    color: var(--muted);
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
   .ranking-intro { margin: -6px 0 18px; }
   .ranking-stats {
     display: grid;
@@ -222,6 +320,8 @@
     color: var(--muted);
   }
   @media (max-width: 620px) {
+    .stage-list { grid-template-columns: 1fr; }
+    .operation-guide ol { grid-template-columns: 1fr; }
     .ranking-stats { grid-template-columns: 1fr; }
     .rank-podium { gap: 6px; min-height: 158px; }
     .podium-card { padding: 14px 7px 12px; }
@@ -230,13 +330,53 @@
   }
   #hud {
     display: flex;
-    gap: 22px;
+    gap: 7px;
     margin-bottom: 10px;
-    font-size: 0.95rem;
+    font-size: 0.82rem;
     flex-wrap: wrap;
+  }
+  .game-mission-title {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+    margin-bottom: 9px;
+    padding: 0 2px;
+  }
+  .game-mission-title strong {
+    color: var(--text);
+    font-size: 1.05rem;
+    letter-spacing: 0.02em;
+  }
+  .game-mission-title span {
+    color: var(--accent);
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+  #hud > span {
+    padding: 6px 9px;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+    background: rgba(7,17,31,0.6);
+    color: var(--muted);
   }
   #hud span b { color: var(--accent); }
   #hud .hp-low b { color: var(--bad); }
+  @keyframes hpAlert {
+    0%, 100% {
+      border-color: rgba(255,82,82,0.3);
+      background: rgba(255,82,82,0.08);
+      box-shadow: none;
+    }
+    50% {
+      border-color: rgba(255,82,82,0.9);
+      background: rgba(255,82,82,0.22);
+      box-shadow: 0 0 12px rgba(255,82,82,0.38);
+    }
+  }
+  #hud .hp-low {
+    animation: hpAlert 0.8s ease-in-out infinite;
+  }
   #screen-game {
     width: min(1080px, 100%);
     padding: 24px;
@@ -272,15 +412,32 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 9px;
+    gap: 8px;
+    margin-bottom: 6px;
     font-size: 0.82rem;
     color: var(--muted);
   }
   .tower-panel-heading b { color: var(--text); font-size: 0.95rem; }
-  .tower-heading-actions {
+  .tower-gold {
+    padding: 5px 8px;
+    border: 1px solid rgba(255,213,79,0.24);
+    border-radius: 8px;
+    background: rgba(255,213,79,0.08);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .tower-gold b {
+    color: #ffd54f;
+    font-size: 1rem;
+  }
+  .tower-toolbar {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 7px;
+    margin-bottom: 9px;
+    color: var(--muted);
+    font-size: 0.76rem;
   }
   #towerSortSelect {
     max-width: 118px;
@@ -338,6 +495,21 @@
     color: var(--muted);
     font-size: 0.7rem;
   }
+  .tower-status {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: 6px;
+  }
+  .tower-selected-label {
+    display: none;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #051018;
+    font-size: 0.66rem;
+    font-weight: 900;
+  }
   .tower-details {
     display: flex;
     justify-content: space-between;
@@ -348,8 +520,15 @@
   .tower-btn.selected {
     border-color: var(--accent) !important;
     background: rgba(77,208,225,0.14);
-    box-shadow: inset 3px 0 0 var(--accent);
+    box-shadow: inset 3px 0 0 var(--accent), 0 0 15px rgba(77,208,225,0.35);
   }
+  .tower-btn.selected .tower-selected-label { display: inline-block; }
+  .tower-btn.selected .tower-role { display: none; }
+  .tower-btn.unaffordable:not(.selected) {
+    opacity: 0.42;
+    filter: saturate(0.45);
+  }
+  .tower-btn.unaffordable .tower-cost { color: #ff8a80; }
   .tower-btn:disabled { opacity: 0.4; cursor: not-allowed; }
   .game-controls .btn-row { flex: 0 0 auto; margin-top: 10px; }
   .game-controls .btn-row button { flex: 1; padding: 9px 10px; }
@@ -392,6 +571,40 @@
     z-index: 20;
   }
   .overlay .card { text-align: center; }
+  .briefing-card { max-width: 620px; }
+  .briefing-story {
+    max-width: 500px;
+    margin: 14px auto 20px;
+    font-size: 1rem;
+  }
+  .briefing-objectives {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 20px 0;
+    text-align: left;
+  }
+  .briefing-objectives div {
+    padding: 13px 14px;
+    border-radius: 12px;
+    background: var(--panel2);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .briefing-objectives span {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+  .briefing-objectives b { font-size: 0.9rem; }
+  .briefing-actions { justify-content: center; }
+  .result-message {
+    max-width: 520px;
+    margin: 14px auto 8px;
+  }
   .result-win { color: var(--good); }
   .result-lose { color: var(--bad); }
+  @media (max-width: 620px) {
+    .briefing-objectives { grid-template-columns: 1fr; }
+  }
   [hidden] { display: none !important; }

@@ -29,7 +29,7 @@ Machine Rift 是一款以瀏覽器 Canvas 呈現的塔防遊戲。Spring Boot �
 | 測試資料庫 | H2（MySQL mode） |
 | Migration | Flyway V1～V14 |
 | API 文件 | springdoc-openapi／Swagger UI |
-| 前端 | 單一 HTML、Canvas 2D |
+| 前端 | HTML、CSS、Vanilla JavaScript、Canvas 2D |
 | 建置 | Maven Wrapper |
 
 ## 3. 系統分層
@@ -171,6 +171,9 @@ V14 將 `player_progress`、`player_session`、`player_tower_unlock` 合併至 `
 
 ## 9. 前端現況
 
+- 前端已拆分為 HTML 結構、共用 CSS、核心狀態、畫面控制與 Canvas 遊戲引擎。
+- `index.html` 只保留五個畫面的 HTML 結構及靜態資源載入。
+- `core.js` 負責 API、Session 與玩家內容；`views.js` 負責畫面；`game.js` 負責塔防引擎。
 - 首頁為登入畫面，首次遊玩的玩家可切換至建立帳號。
 - Access Token 保存於瀏覽器，重新開啟時透過 `/api/auth/me` 恢復登入。
 - 關卡頁顯示全部六關、鎖定狀態與個人最佳成績。
@@ -198,7 +201,8 @@ V14 將 `player_progress`、`player_session`、`player_tower_unlock` 合併至 `
 
 ## 11. 已知限制
 
-- 前端集中在單一 `index.html`，已超過 1300 行；功能繼續增加前應拆分 CSS 與 JavaScript。
+- 前端已完成實體檔案拆分，但 JavaScript 仍採依序載入的原生腳本；若功能繼續增加，
+  可再導入 ES Modules 與明確的匯入／匯出介面。
 - 目前沒有完整的 Spring Security Filter Chain，權限由 Controller 呼叫 `AuthService` 驗證。
 - `GET /api/players` 目前仍是公開端點，供排行榜將玩家 ID 對應成名稱。
 - 敵人只有生命、速度與獎勵，尚未支援護甲、緩速抗性或特殊技能。
@@ -208,8 +212,8 @@ V14 將 `player_progress`、`player_session`、`player_tower_unlock` 合併至 `
 
 ## 12. 建議後續順序
 
-1. 將前端拆分成 `styles.css`、API／狀態模組與遊戲引擎模組。
-2. 將排行榜彙整、前十名與分頁移到後端，避免公開完整玩家清單。
-3. 補上 Spring Security Filter Chain。
-4. 增加 CI，讓 GitHub Push／Pull Request 自動執行測試。
+1. 將排行榜彙整、前十名與分頁移到後端，避免公開完整玩家清單。
+2. 補上 Spring Security Filter Chain。
+3. 增加 CI，讓 GitHub Push／Pull Request 自動執行測試。
+4. 視後續規模將原生腳本改成 ES Modules。
 5. 補上密碼重設與登入安全機制。

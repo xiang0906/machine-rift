@@ -3,7 +3,7 @@
 ## 概述
 Machine Rift 是一款塔防遊戲。這個倉庫包含：
 - Spring Boot 後端：負責玩家、關卡、塔、對戰紀錄與排行榜的資料存取
-- 前端遊戲畫面（`src/main/resources/static/index.html`）：Canvas 繪製的最小可玩塔防切片，實際呼叫後端 API
+- 前端遊戲畫面（`src/main/resources/static/`）：Canvas 繪製的最小可玩塔防切片，實際呼叫後端 API
 
 完整架構、資料模型、功能邊界與後續建議請參考
 [`docs/project-status.md`](docs/project-status.md)。
@@ -165,7 +165,21 @@ Content-Type: application/json
 啟動服務後，可至 `/swagger-ui.html` 瀏覽並測試所有 API；OpenAPI 原始文件在 `/v3/api-docs`。
 
 ## 前端遊戲畫面
-`src/main/resources/static/index.html` 是純前端單一 HTML 檔（Canvas + Vanilla JS），由 Spring Boot 當靜態資源伺服，實際呼叫後端 API，不使用任何前端框架或建置流程。
+前端使用 Canvas + Vanilla JS，由 Spring Boot 當靜態資源伺服，實際呼叫後端 API，
+不使用前端框架或額外建置流程。檔案依責任拆分如下：
+
+```text
+src/main/resources/static/
+├── index.html        # 五個畫面的 HTML 結構
+├── styles.css        # 全站版面、元件與響應式樣式
+└── js/
+    ├── background.js # 登入背景動畫
+    ├── core.js       # API、登入狀態與玩家內容載入
+    ├── views.js      # 登入、註冊、關卡與排行榜畫面
+    └── game.js       # Canvas 塔防引擎、波次與戰績送出
+```
+
+四支 JavaScript 依上述責任拆分，並由 `index.html` 依相依順序載入。
 
 遊玩流程：
 1. 建立帳號或登入 → `POST /api/auth/register`／`POST /api/auth/login`

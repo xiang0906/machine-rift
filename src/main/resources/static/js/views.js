@@ -94,17 +94,10 @@ async function openRanking() {
   listEl.innerHTML = '<div class="ranking-empty">正在載入排行榜...</div>';
   showScreen('ranking');
   try {
-    const [records, players, stages] = await Promise.all([
-      api('GET', '/api/rankings'),
-      api('GET', '/api/players'),
-      api('GET', '/api/stages'),
-    ]);
-    const nameById = {};
-    players.forEach(p => { nameById[p.playerId] = p.playerName; });
-    const stageById = {};
-    stages.forEach(stage => { stageById[stage.stageId] = stage.stageName; });
+    const ranking = await api('GET', '/api/rankings');
+    const ranked = ranking.entries;
 
-    if (records.length === 0) {
+    if (ranked.length === 0) {
       statsEl.innerHTML = `
         <div class="ranking-stat"><span>參賽玩家</span><b>0</b></div>
         <div class="ranking-stat"><span>累積對局</span><b>0</b></div>
@@ -114,27 +107,15 @@ async function openRanking() {
       return;
     }
 
-    const bestByPlayer = new Map();
-    records.forEach(record => {
-      const current = bestByPlayer.get(record.playerId);
-      if (!current || record.score > current.score
-          || (record.score === current.score && record.playTime < current.playTime)) {
-        bestByPlayer.set(record.playerId, record);
-      }
-    });
-    const ranked = [...bestByPlayer.values()]
-      .sort((a, b) => b.score - a.score || a.playTime - b.playTime)
-      .slice(0, 10);
-
     statsEl.innerHTML = `
-      <div class="ranking-stat"><span>參賽玩家</span><b>${bestByPlayer.size}</b></div>
-      <div class="ranking-stat"><span>累積對局</span><b>${records.length}</b></div>
+      <div class="ranking-stat"><span>參賽玩家</span><b>${ranking.participantCount}</b></div>
+      <div class="ranking-stat"><span>累積對局</span><b>${ranking.totalGameCount}</b></div>
       <div class="ranking-stat"><span>目前最高分</span><b>${ranked[0].score.toLocaleString()} 分</b></div>
     `;
 
     const medals = ['🥇', '🥈', '🥉'];
     podiumEl.innerHTML = ranked.slice(0, 3).map((record, index) => {
-      const playerName = nameById[record.playerId] || `玩家 ${record.playerId}`;
+      const playerName = record.playerName;
       const initial = Array.from(playerName.trim())[0] || '?';
       return `
         <div class="podium-card rank-${index + 1}">
@@ -142,20 +123,21 @@ async function openRanking() {
           <div class="rank-avatar">${escapeHtml(initial.toUpperCase())}</div>
           <div class="podium-name" title="${escapeHtml(playerName)}">${escapeHtml(playerName)}</div>
           <div class="podium-score">${record.score.toLocaleString()} 分</div>
-          <div class="podium-meta">${escapeHtml(stageById[record.stageId] || `關卡 ${record.stageId}`)}</div>
+          <div class="podium-meta">${escapeHtml(record.stageName)}</div>
         </div>
       `;
     }).join('');
 
-    listEl.innerHTML = ranked.map((record, index) => {
-      const playerName = nameById[record.playerId] || `玩家 ${record.playerId}`;
-      const stageName = stageById[record.stageId] || `關卡 ${record.stageId}`;
+    listEl.innerHTML = ranked.map(record => {
+      const playerName = record.playerName;
+      const stageName = record.stageName;
       const initial = Array.from(playerName.trim())[0] || '?';
-      const resultClass = record.result === 'WIN' ? 'win' : 'lose';
-      const resultText = record.result === 'WIN' ? '勝利' : '失敗';
+      const won = record.result.toUpperCase() === 'WIN';
+      const resultClass = won ? 'win' : 'lose';
+      const resultText = won ? '勝利' : '失敗';
       return `
       <div class="rank-row">
-        <div class="rank-position">#${index + 1}</div>
+        <div class="rank-position">#${record.rank}</div>
         <div class="rank-avatar">${escapeHtml(initial.toUpperCase())}</div>
         <div>
           <div class="rank-name">${escapeHtml(playerName)}</div>

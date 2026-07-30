@@ -122,22 +122,22 @@ Base path：`/api`
 | 帳號 | POST | `/auth/login` | 使用帳號密碼登入 |
 | 帳號 | GET | `/auth/me` | 以 Bearer token 取得目前玩家 |
 | 帳號 | POST | `/auth/logout` | 登出並撤銷目前 token |
-| 玩家 | GET | `/players` | 取得所有玩家 |
 | 玩家 | GET | `/players/{id}/progress` | 取得本人等級、資產、解鎖內容與各關最佳戰績（需登入） |
 | 關卡 | GET | `/stages` | 取得所有關卡 |
 | 塔 | GET | `/towers` | 取得所有塔 |
 | 戰績 | POST | `/game-records` | 儲存本人的對戰紀錄（需登入） |
-| 排行榜 | GET | `/rankings` | 依分數排序的戰績列表（需登入） |
+| 排行榜 | GET | `/rankings` | 取得後端彙整的前十名排行榜（需登入） |
 
-目前共保留 10 支前端實際使用的 API；未被遊戲流程使用的單筆查詢與後台 CRUD 端點已移除。
+目前共保留 9 支前端實際使用的 API；未被遊戲流程使用的公開玩家清單、單筆查詢與
+後台 CRUD 端點已移除。
 
 所有回應都包在統一格式中：
 
 ```json
 {
   "success": true,
-  "message": "Players retrieved successfully.",
-  "data": [ ... ]
+  "message": "Ranking retrieved successfully.",
+  "data": { ... }
 }
 ```
 
@@ -145,6 +145,29 @@ Base path：`/api`
 
 ```
 Authorization: Bearer <accessToken>
+```
+
+排行榜回應中的 `entries` 最多十筆：
+
+```json
+{
+  "success": true,
+  "message": "Ranking retrieved successfully.",
+  "data": {
+    "participantCount": 3,
+    "totalGameCount": 8,
+    "entries": [
+      {
+        "rank": 1,
+        "playerName": "Ash",
+        "stageName": "核心裂谷",
+        "score": 1200,
+        "playTime": 50,
+        "result": "WIN"
+      }
+    ]
+  }
+}
 ```
 
 ### 範例：註冊帳號
@@ -195,7 +218,7 @@ src/main/resources/static/
 4. 建塔 → `GET /api/towers` 讀取塔的造價/傷害/射程，點選塔種後點地圖空格建造
 5. 開始波次 → 依資料庫波次與敵人設定生成敵人
 6. 結束遊戲 → 顯示勝敗敘事，並帶著登入 token 呼叫 `POST /api/game-records`
-7. 登入後可另外查看排行榜 → `GET /api/rankings` 搭配 `GET /api/players` 顯示玩家名稱
+7. 登入後可另外查看排行榜 → `GET /api/rankings` 直接取得統計與前十名
 
 全新資料庫會由 Flyway 自動建立六個關卡、六種防塔、六種敵人、44 個路徑節點
 與 26 個波次，因此首次啟動即可遊玩。六條關卡路線使用不同的節點序列。前端會從
@@ -220,11 +243,12 @@ src/main/resources/static/
 輕量 Canvas 回饋：命中閃白、擊殺金幣浮字、基地受擊震動、低血量 HUD 警示，以及
 最後敵人清除後的短暫勝利停頓。
 
-排行榜只能在登入後查看。前端會彙整每位玩家的最高分，同分時以較短完成時間優先，
-並顯示前三名頒獎台與完整前十名列表。
+排行榜只能在登入後查看。後端會從每位玩家的戰績中選出最高分，同分時以較短完成
+時間優先，最多回傳十名，並直接附上排名、玩家名稱、關卡名稱、分數、時間與結果。
+前端只負責顯示前三名頒獎台及前十名列表。
 
 ## 專案現況
-- 後端已保留遊戲核心流程需要的 10 支 API，並提供集中式例外處理。
+- 後端已保留遊戲核心流程需要的 9 支 API，並提供集中式例外處理。
 - 玩家帳號、加密密碼、持久登入、個人進度、解鎖內容與最佳戰績已完成。
 - 關卡路徑、波次與敵人設定皆由資料庫及 API 提供。
 - 遊戲內容目前包含六個關卡、六種防塔、六種敵人與 26 個波次。

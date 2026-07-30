@@ -2,8 +2,6 @@ package com.machinerift.machine_rift.controller;
 
 import com.machinerift.machine_rift.dto.ApiResponse;
 import com.machinerift.machine_rift.dto.PlayerProgressResponseDto;
-import com.machinerift.machine_rift.dto.PlayerResponseDto;
-import com.machinerift.machine_rift.service.PlayerService;
 import com.machinerift.machine_rift.service.PlayerProgressService;
 import com.machinerift.machine_rift.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -14,8 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 /**
  * REST controller for player endpoints.
  */
@@ -24,19 +20,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PlayerController {
 
-    private final PlayerService playerService;
     private final PlayerProgressService playerProgressService;
     private final AuthService authService;
-
-    /**
-     * Lists all players.
-     *
-     * @return response entity containing a list of players
-     */
-    @GetMapping
-    public ResponseEntity<ApiResponse<List<PlayerResponseDto>>> getAllPlayers() {
-        return ResponseEntity.ok(ApiResponse.success("Players retrieved successfully.", playerService.getAllPlayers()));
-    }
 
     /**
      * Returns progression, unlocked content, and personal bests.

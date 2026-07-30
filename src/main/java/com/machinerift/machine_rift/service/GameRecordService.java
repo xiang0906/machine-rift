@@ -2,6 +2,8 @@ package com.machinerift.machine_rift.service;
 
 import com.machinerift.machine_rift.dto.GameRecordRequestDto;
 import com.machinerift.machine_rift.dto.GameRecordResponseDto;
+import com.machinerift.machine_rift.dto.RankingEntryResponseDto;
+import com.machinerift.machine_rift.dto.RankingResponseDto;
 import com.machinerift.machine_rift.entity.GameRecord;
 import com.machinerift.machine_rift.entity.Player;
 import com.machinerift.machine_rift.entity.Stage;
@@ -15,7 +17,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Service layer for game record persistence and ranking queries.
@@ -23,6 +28,8 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class GameRecordService {
+
+    private static final int RANKING_LIMIT = 10;
 
     private final GameRecordRepository gameRecordRepository;
     private final PlayerRepository playerRepository;
@@ -57,14 +64,36 @@ public class GameRecordService {
     }
 
     /**
-     * Retrieves top-ranked game records.
-     *
-     * @return top-scored game records
+     * Returns at most ten players, using each player's best score and shortest
+     * play time as the tie breaker.
      */
     @Transactional(readOnly = true)
-    public List<GameRecordResponseDto> getRankings() {
-        return gameRecordRepository.findAllByOrderByScoreDesc().stream()
-                .map(gameRecordMapper::toResponseDto)
-                .toList();
+    public RankingResponseDto getRankings() {
+        List<GameRecord> orderedRecords =
+                gameRecordRepository.findAllByOrderByScoreDescPlayTimeAscRecordIdAsc();
+        Set<Long> participantIds = new HashSet<>();
+        List<RankingEntryResponseDto> entries = new ArrayList<>();
+
+        for (GameRecord record : orderedRecords) {
+            Long playerId = record.getPlayer().getPlayerId();
+            boolean firstRecordForPlayer = participantIds.add(playerId);
+            if (!firstRecordForPlayer || entries.size() >= RANKING_LIMIT) {
+                continue;
+            }
+            entries.add(RankingEntryResponseDto.builder()
+                    .rank(entries.size() + 1)
+                    .playerName(record.getPlayer().getPlayerName())
+                    .stageName(record.getStage().getStageName())
+                    .score(record.getScore())
+                    .playTime(record.getPlayTime())
+                    .result(record.getResult())
+                    .build());
+        }
+
+        return RankingResponseDto.builder()
+                .participantCount(participantIds.size())
+                .totalGameCount(orderedRecords.size())
+                .entries(entries)
+                .build();
     }
 }

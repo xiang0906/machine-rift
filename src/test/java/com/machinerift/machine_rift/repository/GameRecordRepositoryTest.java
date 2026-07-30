@@ -25,7 +25,7 @@ class GameRecordRepositoryTest {
     private StageRepository stageRepository;
 
     @Test
-    void shouldOrderRankingsByScoreDescending() {
+    void shouldOrderRankingsByScoreThenShortestPlayTime() {
         Player player = playerRepository.save(Player.builder()
                 .playerName("Alice")
                 .username("alice")
@@ -49,11 +49,14 @@ class GameRecordRepositoryTest {
                 .player(player).stage(stage).score(100).result("WIN").playTime(30).build());
         gameRecordRepository.save(GameRecord.builder()
                 .player(player).stage(stage).score(900).result("WIN").playTime(40).build());
+        gameRecordRepository.save(GameRecord.builder()
+                .player(player).stage(stage).score(900).result("WIN").playTime(20).build());
 
-        List<Integer> scores = gameRecordRepository.findAllByOrderByScoreDesc().stream()
-                .map(GameRecord::getScore)
+        List<String> rankingOrder = gameRecordRepository
+                .findAllByOrderByScoreDescPlayTimeAscRecordIdAsc().stream()
+                .map(record -> record.getScore() + ":" + record.getPlayTime())
                 .toList();
 
-        assertEquals(List.of(900, 100), scores);
+        assertEquals(List.of("900:20", "900:40", "100:30"), rankingOrder);
     }
 }

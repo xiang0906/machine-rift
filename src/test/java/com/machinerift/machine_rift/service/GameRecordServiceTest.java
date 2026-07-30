@@ -2,6 +2,7 @@ package com.machinerift.machine_rift.service;
 
 import com.machinerift.machine_rift.dto.GameRecordRequestDto;
 import com.machinerift.machine_rift.dto.GameRecordResponseDto;
+import com.machinerift.machine_rift.dto.RankingResponseDto;
 import com.machinerift.machine_rift.entity.GameRecord;
 import com.machinerift.machine_rift.entity.Player;
 import com.machinerift.machine_rift.entity.Stage;
@@ -74,14 +75,37 @@ class GameRecordServiceTest {
     }
 
     @Test
-    void shouldReturnRankingsInRepositoryScoreOrder() {
-        GameRecord highScore = record(1L, 1200);
-        GameRecord lowScore = record(2L, 400);
-        when(gameRecordRepository.findAllByOrderByScoreDesc()).thenReturn(List.of(highScore, lowScore));
+    void shouldReturnEachPlayersBestRecordAndLimitRankingToTen() {
+        List<GameRecord> orderedRecords = List.of(
+                record(1L, player(2L), stage(2L), 1200, 50),
+                record(2L, player(1L), stage(1L), 1200, 80),
+                record(3L, player(1L), stage(2L), 1000, 40),
+                record(4L, player(3L), stage(1L), 900, 60),
+                record(5L, player(4L), stage(1L), 800, 60),
+                record(6L, player(5L), stage(1L), 700, 60),
+                record(7L, player(6L), stage(1L), 600, 60),
+                record(8L, player(7L), stage(1L), 500, 60),
+                record(9L, player(8L), stage(1L), 400, 60),
+                record(10L, player(9L), stage(1L), 300, 60),
+                record(11L, player(10L), stage(1L), 200, 60),
+                record(12L, player(11L), stage(1L), 100, 60),
+                record(13L, player(12L), stage(1L), 50, 60));
+        when(gameRecordRepository.findAllByOrderByScoreDescPlayTimeAscRecordIdAsc())
+                .thenReturn(orderedRecords);
 
-        List<GameRecordResponseDto> rankings = gameRecordService.getRankings();
+        RankingResponseDto ranking = gameRecordService.getRankings();
 
-        assertEquals(List.of(1200, 400), rankings.stream().map(GameRecordResponseDto::getScore).toList());
+        assertEquals(12, ranking.getParticipantCount());
+        assertEquals(13, ranking.getTotalGameCount());
+        assertEquals(10, ranking.getEntries().size());
+        assertEquals(List.of("Player 2", "Player 1", "Player 3"),
+                ranking.getEntries().stream()
+                        .limit(3)
+                        .map(entry -> entry.getPlayerName())
+                        .toList());
+        assertEquals(List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+                ranking.getEntries().stream().map(entry -> entry.getRank()).toList());
+        assertEquals("Stage 2", ranking.getEntries().getFirst().getStageName());
     }
 
     private Player player(Long id) {
@@ -93,8 +117,9 @@ class GameRecordServiceTest {
                 .rewardGold(10).enemyCount(1).build();
     }
 
-    private GameRecord record(Long id, int score) {
-        return GameRecord.builder().recordId(id).player(player(1L)).stage(stage(1L))
-                .score(score).result("WIN").playTime(60).build();
+    private GameRecord record(
+            Long id, Player player, Stage stage, int score, int playTime) {
+        return GameRecord.builder().recordId(id).player(player).stage(stage)
+                .score(score).result("WIN").playTime(playTime).build();
     }
 }

@@ -3,6 +3,7 @@ package com.machinerift.machine_rift.controller;
 import com.machinerift.machine_rift.dto.ApiResponse;
 import com.machinerift.machine_rift.dto.GameRecordRequestDto;
 import com.machinerift.machine_rift.dto.GameRecordResponseDto;
+import com.machinerift.machine_rift.dto.RankingResponseDto;
 import com.machinerift.machine_rift.service.GameRecordService;
 import com.machinerift.machine_rift.service.AuthService;
 import jakarta.validation.Valid;
@@ -15,8 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 /**
  * REST controller for game record endpoints and rankings.
@@ -50,7 +49,7 @@ public class GameRecordController {
      * @return response entity containing ranking data
      */
     @GetMapping("/rankings")
-    public ResponseEntity<ApiResponse<List<GameRecordResponseDto>>> getRankings(
+    public ResponseEntity<ApiResponse<RankingResponseDto>> getRankings(
             @RequestHeader(value = "Authorization", required = false) String authorization) {
         authService.requirePlayer(authorization);
         return ResponseEntity.ok(ApiResponse.success("Ranking retrieved successfully.", gameRecordService.getRankings()));

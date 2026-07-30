@@ -40,7 +40,7 @@ Browser / Canvas UI
         ▼
 Controller
         ▼
-Service（驗證、進度、解鎖與刪除規則）
+Service（驗證、進度、解鎖與戰績規則）
         ▼
 Repository
         ▼
@@ -54,7 +54,7 @@ MySQL / H2
 | 套件 | 責任 |
 | --- | --- |
 | `controller` | REST API 與 HTTP 狀態 |
-| `service` | 帳號、進度、解鎖與資料完整性規則 |
+| `service` | 帳號、進度、解鎖與戰績規則 |
 | `repository` | Spring Data JPA 查詢 |
 | `entity` | 資料表映射與關聯 |
 | `dto` | API 請求與回應契約 |
@@ -70,7 +70,7 @@ MySQL / H2
 - 密碼長度為 8～72 個字元，資料庫只保存 BCrypt 雜湊。
 - 登入後產生 30 天有效的 Session；資料庫保存 Token 的 SHA-256 雜湊。
 - 登出會撤銷目前 Session。
-- 玩家進度、玩家資料更新、帳號刪除、戰績寫入與排行榜需要 Bearer Token。
+- 玩家進度、戰績寫入與排行榜需要 Bearer Token。
 - 玩家不可讀寫其他玩家的私人進度或代替其他玩家寫入戰績。
 
 ## 5. 玩家進度
@@ -167,7 +167,7 @@ MySQL / H2
 | 排行榜 | `GET /api/rankings` |
 
 目前共 10 支 API，皆為前端實際使用的核心端點。未使用的玩家維護、關卡／防禦塔後台 CRUD、
-單筆查詢與戰績查詢端點已從 Controller 移除；底層 Service 暫時保留，作為後續程式碼收斂的緩衝。
+單筆查詢與戰績查詢端點及其 Service、Request DTO、Mapper、Repository 輔助程式已移除。
 所有回應使用統一的 `ApiResponse` 格式，完整 API 可在 `/swagger-ui.html` 查看。
 
 ## 9. 前端現況
@@ -183,7 +183,7 @@ MySQL / H2
 
 ## 10. 測試與品質
 
-目前自動測試共 16 項，涵蓋：
+目前自動測試共 13 項，涵蓋：
 
 - Spring Boot 與 Flyway 啟動
 - 種子資料數量與路線唯一性
@@ -191,8 +191,7 @@ MySQL / H2
 - 帳號註冊、登入、登出與 Session
 - 玩家進度、個人最佳與解鎖
 - 排行榜登入權限
-- 玩家／關卡刪除完整性
-- 戰績查詢與更新
+- 戰績寫入、關卡鎖定與排行榜排序
 
 最近一次完整測試、JavaScript 語法檢查與 Maven 打包皆通過。
 
@@ -201,7 +200,6 @@ MySQL / H2
 - 前端集中在單一 `index.html`，已超過 1300 行；功能繼續增加前應拆分 CSS 與 JavaScript。
 - 目前沒有完整的 Spring Security Filter Chain，權限由 Controller 呼叫 `AuthService` 驗證。
 - `GET /api/players` 目前仍是公開端點，供排行榜將玩家 ID 對應成名稱。
-- Controller 已收斂為核心流程，但 Service、DTO 與 Mapper 仍保留部分已無公開端點呼叫的方法。
 - 敵人只有生命、速度與獎勵，尚未支援護甲、緩速抗性或特殊技能。
 - 防禦塔只有基本單體攻擊，尚未支援升級、範圍傷害、緩速或減益。
 - 沒有密碼重設、電子郵件驗證、限流與登入失敗鎖定。
@@ -209,9 +207,8 @@ MySQL / H2
 
 ## 12. 建議後續順序
 
-1. 移除已無 Controller 使用的 Service、DTO 與 Mapper 方法。
-2. 將前端拆分成 `styles.css`、API／狀態模組與遊戲引擎模組。
-3. 將排行榜彙整、前十名與分頁移到後端，避免公開完整玩家清單。
-4. 補上 Spring Security Filter Chain。
-5. 增加 CI，讓 GitHub Push／Pull Request 自動執行測試。
-6. 補上密碼重設與登入安全機制。
+1. 將前端拆分成 `styles.css`、API／狀態模組與遊戲引擎模組。
+2. 將排行榜彙整、前十名與分頁移到後端，避免公開完整玩家清單。
+3. 補上 Spring Security Filter Chain。
+4. 增加 CI，讓 GitHub Push／Pull Request 自動執行測試。
+5. 補上密碼重設與登入安全機制。

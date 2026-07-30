@@ -108,8 +108,7 @@ Windows PowerShell：
   seed migration 只補上缺少的同名內容，不覆寫既有資料。
 - 核心資料表：`player`、`player_session`、`player_progress`、`player_stage_progress`、
   `player_tower_unlock`、`stage`、`stage_path`、`stage_wave`、`tower`、`enemy`、
-  `game_record`。刪除 `player` 或 `stage` 時，若已有關聯的 `game_record`，
-  會被拒絕（回傳 409 衝突）。
+  `game_record`。資料表之間以外鍵維持玩家、關卡與戰績的關聯完整性。
 
 ## API 端點
 
@@ -194,7 +193,7 @@ Content-Type: application/json
 並顯示前三名頒獎台與完整前十名列表。
 
 ## 專案現況
-- 後端 API 骨架與資料完整性防護已完成（玩家/關卡刪除保護、集中式例外處理）。
+- 後端已保留遊戲核心流程需要的 10 支 API，並提供集中式例外處理。
 - 玩家帳號、加密密碼、持久登入、個人進度、解鎖內容與最佳戰績已完成。
 - 關卡路徑、波次與敵人設定皆由資料庫及 API 提供。
 - 遊戲內容目前包含六個關卡、六種防塔、六種敵人與 26 個波次。

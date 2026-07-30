@@ -18,20 +18,4 @@ public interface GameRecordRepository extends JpaRepository<GameRecord, Long> {
      * @return ranking list
      */
     List<GameRecord> findAllByOrderByScoreDesc();
-
-    /**
-     * Checks whether a player is referenced by a saved game record.
-     *
-     * @param playerId player id
-     * @return true when deleting the player would break game history
-     */
-    boolean existsByPlayerPlayerId(Long playerId);
-
-    /**
-     * Checks whether a stage is referenced by a saved game record.
-     *
-     * @param stageId stage id
-     * @return true when deleting the stage would break game history
-     */
-    boolean existsByStageStageId(Long stageId);
 }

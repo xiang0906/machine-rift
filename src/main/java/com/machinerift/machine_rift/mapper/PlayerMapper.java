@@ -1,6 +1,5 @@
 package com.machinerift.machine_rift.mapper;
 
-import com.machinerift.machine_rift.dto.PlayerRequestDto;
 import com.machinerift.machine_rift.dto.PlayerResponseDto;
 import com.machinerift.machine_rift.entity.Player;
 import org.springframework.stereotype.Component;
@@ -26,14 +25,4 @@ public class PlayerMapper {
                 .build();
     }
 
-    /**
-     * Updates an existing entity from a request DTO.
-     *
-     * @param entity existing entity
-     * @param requestDto incoming data
-     */
-    public void updateEntity(Player entity, PlayerRequestDto requestDto) {
-        entity.setPlayerName(requestDto.getPlayerName());
-        entity.setLevel(requestDto.getLevel());
-    }
 }

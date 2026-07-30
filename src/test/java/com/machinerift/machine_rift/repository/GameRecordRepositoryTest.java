@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest
 class GameRecordRepositoryTest {
@@ -26,7 +25,7 @@ class GameRecordRepositoryTest {
     private StageRepository stageRepository;
 
     @Test
-    void shouldOrderRankingsAndDetectRelatedGameRecords() {
+    void shouldOrderRankingsByScoreDescending() {
         Player player = playerRepository.save(Player.builder()
                 .playerName("Alice")
                 .username("alice")
@@ -51,7 +50,5 @@ class GameRecordRepositoryTest {
                 .toList();
 
         assertEquals(List.of(900, 100), scores);
-        assertTrue(gameRecordRepository.existsByPlayerPlayerId(player.getPlayerId()));
-        assertTrue(gameRecordRepository.existsByStageStageId(stage.getStageId()));
     }
 }

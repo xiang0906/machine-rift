@@ -2,7 +2,6 @@ package com.machinerift.machine_rift.mapper;
 
 import com.machinerift.machine_rift.dto.EnemyResponseDto;
 import com.machinerift.machine_rift.dto.StagePathResponseDto;
-import com.machinerift.machine_rift.dto.StageRequestDto;
 import com.machinerift.machine_rift.dto.StageResponseDto;
 import com.machinerift.machine_rift.dto.StageWaveResponseDto;
 import com.machinerift.machine_rift.entity.Stage;
@@ -51,31 +50,4 @@ public class StageMapper {
                 .build();
     }
 
-    /**
-     * Maps a request DTO to a new entity.
-     *
-     * @param requestDto incoming data
-     * @return entity ready for persistence
-     */
-    public Stage toEntity(StageRequestDto requestDto) {
-        return Stage.builder()
-                .stageName(requestDto.getStageName())
-                .difficulty(requestDto.getDifficulty())
-                .rewardGold(requestDto.getRewardGold())
-                .enemyCount(requestDto.getEnemyCount())
-                .build();
-    }
-
-    /**
-     * Updates an existing entity from a request DTO.
-     *
-     * @param entity existing entity
-     * @param requestDto incoming data
-     */
-    public void updateEntity(Stage entity, StageRequestDto requestDto) {
-        entity.setStageName(requestDto.getStageName());
-        entity.setDifficulty(requestDto.getDifficulty());
-        entity.setRewardGold(requestDto.getRewardGold());
-        entity.setEnemyCount(requestDto.getEnemyCount());
-    }
 }

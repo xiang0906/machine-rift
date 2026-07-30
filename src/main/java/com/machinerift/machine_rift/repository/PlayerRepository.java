@@ -17,6 +17,4 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
     boolean existsByUsername(String username);
 
     boolean existsByPlayerNameIgnoreCase(String playerName);
-
-    boolean existsByPlayerNameIgnoreCaseAndPlayerIdNot(String playerName, Long playerId);
 }

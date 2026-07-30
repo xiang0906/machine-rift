@@ -57,31 +57,6 @@ public class GameRecordService {
     }
 
     /**
-     * Retrieves all game records.
-     *
-     * @return list of response DTOs
-     */
-    @Transactional(readOnly = true)
-    public List<GameRecordResponseDto> getAllGameRecords() {
-        return gameRecordRepository.findAll().stream()
-                .map(gameRecordMapper::toResponseDto)
-                .toList();
-    }
-
-    /**
-     * Retrieves a game record by id.
-     *
-     * @param id record id
-     * @return response DTO
-     */
-    @Transactional(readOnly = true)
-    public GameRecordResponseDto getGameRecordById(Long id) {
-        GameRecord gameRecord = gameRecordRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Game record not found with id: " + id));
-        return gameRecordMapper.toResponseDto(gameRecord);
-    }
-
-    /**
      * Retrieves top-ranked game records.
      *
      * @return top-scored game records

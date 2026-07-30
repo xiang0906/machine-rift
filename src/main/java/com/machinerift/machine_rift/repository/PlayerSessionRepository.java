@@ -14,7 +14,5 @@ public interface PlayerSessionRepository extends JpaRepository<PlayerSession, Lo
 
     void deleteByTokenHash(String tokenHash);
 
-    void deleteAllByPlayerPlayerId(Long playerId);
-
     void deleteAllByExpiresAtBefore(LocalDateTime expiresAt);
 }

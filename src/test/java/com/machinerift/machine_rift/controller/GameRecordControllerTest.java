@@ -1,7 +1,9 @@
 package com.machinerift.machine_rift.controller;
 
+import com.machinerift.machine_rift.dto.GameRecordResponseDto;
 import com.machinerift.machine_rift.dto.RankingEntryResponseDto;
 import com.machinerift.machine_rift.dto.RankingResponseDto;
+import com.machinerift.machine_rift.entity.Player;
 import com.machinerift.machine_rift.service.AuthService;
 import com.machinerift.machine_rift.service.GameRecordService;
 import org.junit.jupiter.api.Test;
@@ -12,10 +14,14 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @WebMvcTest(GameRecordController.class)
 class GameRecordControllerTest {
@@ -28,6 +34,40 @@ class GameRecordControllerTest {
 
     @MockBean
     private AuthService authService;
+
+    @Test
+    void shouldSaveRecordForPlayerResolvedFromToken() throws Exception {
+        Player authenticatedPlayer = Player.builder()
+                .playerId(7L)
+                .playerName("Alice")
+                .build();
+        when(authService.requirePlayer("Bearer test-token"))
+                .thenReturn(authenticatedPlayer);
+        when(gameRecordService.saveGameRecord(any(), same(authenticatedPlayer)))
+                .thenReturn(GameRecordResponseDto.builder()
+                        .recordId(11L)
+                        .playerId(7L)
+                        .stageId(2L)
+                        .score(900)
+                        .result("WIN")
+                        .playTime(80)
+                        .build());
+
+        mockMvc.perform(post("/api/game-records")
+                        .header("Authorization", "Bearer test-token")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "stageId": 2,
+                                  "score": 900,
+                                  "result": "WIN",
+                                  "playTime": 80
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.playerId").value(7))
+                .andExpect(jsonPath("$.data.stageId").value(2));
+    }
 
     @Test
     void shouldReturnBackendAggregatedRanking() throws Exception {

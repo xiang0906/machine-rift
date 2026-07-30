@@ -18,9 +18,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class GameRecordRequestDto {
 
-    @NotNull(message = "Player id is required")
-    private Long playerId;
-
     @NotNull(message = "Stage id is required")
     private Long stageId;
 

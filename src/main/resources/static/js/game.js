@@ -604,7 +604,6 @@ async function endGame(result) {
 
   try {
     await api('POST', '/api/game-records', {
-      playerId: state.playerId,
       stageId: state.selectedStage.stageId,
       score: game.score,
       result,

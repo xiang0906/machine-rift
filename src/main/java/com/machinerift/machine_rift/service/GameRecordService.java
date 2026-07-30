@@ -11,7 +11,6 @@ import com.machinerift.machine_rift.exception.ResourceNotFoundException;
 import com.machinerift.machine_rift.exception.ResourceConflictException;
 import com.machinerift.machine_rift.mapper.GameRecordMapper;
 import com.machinerift.machine_rift.repository.GameRecordRepository;
-import com.machinerift.machine_rift.repository.PlayerRepository;
 import com.machinerift.machine_rift.repository.StageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,7 +31,6 @@ public class GameRecordService {
     private static final int RANKING_LIMIT = 10;
 
     private final GameRecordRepository gameRecordRepository;
-    private final PlayerRepository playerRepository;
     private final StageRepository stageRepository;
     private final GameRecordMapper gameRecordMapper;
     private final PlayerProgressService playerProgressService;
@@ -41,16 +39,17 @@ public class GameRecordService {
      * Saves a completed game session.
      *
      * @param requestDto incoming game record payload
+     * @param player authenticated player resolved from the access token
      * @return saved response DTO
      */
     @Transactional
-    public GameRecordResponseDto saveGameRecord(GameRecordRequestDto requestDto) {
-        Player player = playerRepository.findById(requestDto.getPlayerId())
-                .orElseThrow(() -> new ResourceNotFoundException("Player not found with id: " + requestDto.getPlayerId()));
+    public GameRecordResponseDto saveGameRecord(
+            GameRecordRequestDto requestDto, Player player) {
         Stage stage = stageRepository.findById(requestDto.getStageId())
                 .orElseThrow(() -> new ResourceNotFoundException("Stage not found with id: " + requestDto.getStageId()));
         if (!playerProgressService.isStageUnlocked(player, stage)) {
-            throw new ResourceConflictException("Stage is locked for player: " + requestDto.getPlayerId());
+            throw new ResourceConflictException(
+                    "Stage is locked for player: " + player.getPlayerId());
         }
 
         GameRecord savedRecord = gameRecordRepository.save(gameRecordMapper.toEntity(requestDto, player, stage));

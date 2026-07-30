@@ -6,7 +6,6 @@ import com.machinerift.machine_rift.dto.UnlockedTowerResponseDto;
 import com.machinerift.machine_rift.entity.Player;
 import com.machinerift.machine_rift.entity.PlayerStageProgress;
 import com.machinerift.machine_rift.entity.Stage;
-import com.machinerift.machine_rift.exception.ResourceNotFoundException;
 import com.machinerift.machine_rift.repository.PlayerRepository;
 import com.machinerift.machine_rift.repository.PlayerStageProgressRepository;
 import com.machinerift.machine_rift.repository.StageRepository;
@@ -86,12 +85,12 @@ public class PlayerProgressService {
     /**
      * Returns the full progression view, including locked stages.
      *
-     * @param playerId player id
+     * @param player authenticated player
      * @return progression response
      */
     @Transactional
-    public PlayerProgressResponseDto getProgress(Long playerId) {
-        Player player = getPlayer(playerId);
+    public PlayerProgressResponseDto getProgress(Player player) {
+        Long playerId = player.getPlayerId();
         initializePlayer(player);
 
         Map<Long, PlayerStageProgress> progressByStage = playerStageProgressRepository
@@ -233,9 +232,4 @@ public class PlayerProgressService {
         playerStageProgressRepository.save(stageProgress);
     }
 
-    private Player getPlayer(Long playerId) {
-        return playerRepository.findById(playerId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Player not found with id: " + playerId));
-    }
 }

@@ -91,15 +91,6 @@ public class AuthService {
         return player;
     }
 
-    @Transactional(readOnly = true)
-    public Player requirePlayer(String authorizationHeader, Long expectedPlayerId) {
-        Player player = requirePlayer(authorizationHeader);
-        if (!player.getPlayerId().equals(expectedPlayerId)) {
-            throw new AuthenticationException("無法存取其他玩家的資料");
-        }
-        return player;
-    }
-
     @Transactional
     public void logout(String authorizationHeader) {
         String rawToken = extractBearerToken(authorizationHeader);

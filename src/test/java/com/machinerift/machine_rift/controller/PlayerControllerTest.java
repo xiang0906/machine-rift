@@ -1,5 +1,7 @@
 package com.machinerift.machine_rift.controller;
 
+import com.machinerift.machine_rift.dto.PlayerProgressResponseDto;
+import com.machinerift.machine_rift.entity.Player;
 import com.machinerift.machine_rift.exception.AuthenticationException;
 import com.machinerift.machine_rift.service.PlayerProgressService;
 import com.machinerift.machine_rift.service.AuthService;
@@ -37,13 +39,44 @@ class PlayerControllerTest {
 
     @Test
     void shouldRequireLoginForPlayerProgress() throws Exception {
-        when(authService.requirePlayer(null, 1L))
+        when(authService.requirePlayer(null))
                 .thenThrow(new AuthenticationException("請先登入"));
 
-        mockMvc.perform(get("/api/players/1/progress"))
+        mockMvc.perform(get("/api/players/me/progress"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("請先登入"));
+    }
+
+    @Test
+    void shouldReturnProgressForPlayerResolvedFromToken() throws Exception {
+        Player authenticatedPlayer = Player.builder()
+                .playerId(5L)
+                .playerName("Alice")
+                .build();
+        when(authService.requirePlayer("Bearer test-token"))
+                .thenReturn(authenticatedPlayer);
+        when(playerProgressService.getProgress(authenticatedPlayer))
+                .thenReturn(PlayerProgressResponseDto.builder()
+                        .playerId(5L)
+                        .level(3)
+                        .experience(2200)
+                        .build());
+
+        mockMvc.perform(get("/api/players/me/progress")
+                        .header("Authorization", "Bearer test-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.playerId").value(5))
+                .andExpect(jsonPath("$.data.level").value(3));
+    }
+
+    @Test
+    void shouldReturnNotFoundForRemovedPlayerIdProgressApi() throws Exception {
+        mockMvc.perform(get("/api/players/1/progress")
+                        .header("Authorization", "Bearer test-token"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("找不到指定的 API 或資源"));
     }
 
     @Test

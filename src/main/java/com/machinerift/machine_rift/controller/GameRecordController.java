@@ -4,6 +4,7 @@ import com.machinerift.machine_rift.dto.ApiResponse;
 import com.machinerift.machine_rift.dto.GameRecordRequestDto;
 import com.machinerift.machine_rift.dto.GameRecordResponseDto;
 import com.machinerift.machine_rift.dto.RankingResponseDto;
+import com.machinerift.machine_rift.entity.Player;
 import com.machinerift.machine_rift.service.GameRecordService;
 import com.machinerift.machine_rift.service.AuthService;
 import jakarta.validation.Valid;
@@ -38,9 +39,11 @@ public class GameRecordController {
     public ResponseEntity<ApiResponse<GameRecordResponseDto>> saveGameRecord(
             @Valid @RequestBody GameRecordRequestDto requestDto,
             @RequestHeader(value = "Authorization", required = false) String authorization) {
-        authService.requirePlayer(authorization, requestDto.getPlayerId());
+        Player player = authService.requirePlayer(authorization);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Game record saved successfully.", gameRecordService.saveGameRecord(requestDto)));
+                .body(ApiResponse.success(
+                        "Game record saved successfully.",
+                        gameRecordService.saveGameRecord(requestDto, player)));
     }
 
     /**

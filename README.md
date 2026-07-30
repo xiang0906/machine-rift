@@ -122,7 +122,7 @@ Base path：`/api`
 | 帳號 | POST | `/auth/login` | 使用帳號密碼登入 |
 | 帳號 | GET | `/auth/me` | 以 Bearer token 取得目前玩家 |
 | 帳號 | POST | `/auth/logout` | 登出並撤銷目前 token |
-| 玩家 | GET | `/players/{id}/progress` | 取得本人等級、資產、解鎖內容與各關最佳戰績（需登入） |
+| 玩家 | GET | `/players/me/progress` | 取得目前登入玩家的進度與最佳戰績（需登入） |
 | 關卡 | GET | `/stages` | 取得所有關卡 |
 | 塔 | GET | `/towers` | 取得所有塔 |
 | 戰績 | POST | `/game-records` | 儲存本人的對戰紀錄（需登入） |
@@ -146,6 +146,9 @@ Base path：`/api`
 ```
 Authorization: Bearer <accessToken>
 ```
+
+私人進度與戰績寫入都以 Bearer Token 對應的登入玩家為準。前端不需在網址或戰績
+request 中傳送 `playerId`，因此不能指定其他玩家的身分。
 
 排行榜回應中的 `entries` 最多十筆：
 
@@ -213,7 +216,8 @@ src/main/resources/static/
 
 遊玩流程：
 1. 建立帳號或登入 → `POST /api/auth/register`／`POST /api/auth/login`
-2. 前端保存 access token；重新整理或再次開啟時以 `GET /api/auth/me` 恢復同一玩家
+2. 前端保存 access token；重新整理或再次開啟時以 `GET /api/auth/me` 恢復同一玩家，
+   並以 `GET /api/players/me/progress` 取得該玩家進度
 3. 選擇關卡 → `GET /api/stages` 讀取關卡清單並顯示靜態任務簡報
 4. 建塔 → `GET /api/towers` 讀取塔的造價/傷害/射程，點選塔種後點地圖空格建造
 5. 開始波次 → 依資料庫波次與敵人設定生成敵人

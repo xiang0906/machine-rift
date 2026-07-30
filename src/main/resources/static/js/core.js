@@ -111,7 +111,7 @@ async function loadPlayerContent() {
   const [stages, towers, progress] = await Promise.all([
     api('GET', '/api/stages'),
     api('GET', '/api/towers'),
-    api('GET', `/api/players/${state.playerId}/progress`),
+    api('GET', '/api/players/me/progress'),
   ]);
   const stageProgressById = new Map(progress.stages.map(item => [item.stageId, item]));
   const unlockedTowerIds = new Set(

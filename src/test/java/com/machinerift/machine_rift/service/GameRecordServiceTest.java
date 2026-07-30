@@ -8,7 +8,6 @@ import com.machinerift.machine_rift.entity.Player;
 import com.machinerift.machine_rift.entity.Stage;
 import com.machinerift.machine_rift.mapper.GameRecordMapper;
 import com.machinerift.machine_rift.repository.GameRecordRepository;
-import com.machinerift.machine_rift.repository.PlayerRepository;
 import com.machinerift.machine_rift.repository.StageRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,9 +31,6 @@ class GameRecordServiceTest {
     private GameRecordRepository gameRecordRepository;
 
     @Mock
-    private PlayerRepository playerRepository;
-
-    @Mock
     private StageRepository stageRepository;
 
     @Mock
@@ -45,8 +41,8 @@ class GameRecordServiceTest {
     @BeforeEach
     void setUp() {
         gameRecordService = new GameRecordService(
-                gameRecordRepository, playerRepository, stageRepository,
-                new GameRecordMapper(), playerProgressService);
+                gameRecordRepository, stageRepository, new GameRecordMapper(),
+                playerProgressService);
     }
 
     @Test
@@ -54,8 +50,7 @@ class GameRecordServiceTest {
         Player player = player(1L);
         Stage stage = stage(2L);
         GameRecordRequestDto request = GameRecordRequestDto.builder()
-                .playerId(1L).stageId(2L).score(900).result("WIN").playTime(120).build();
-        when(playerRepository.findById(1L)).thenReturn(Optional.of(player));
+                .stageId(2L).score(900).result("WIN").playTime(120).build();
         when(stageRepository.findById(2L)).thenReturn(Optional.of(stage));
         when(playerProgressService.isStageUnlocked(player, stage)).thenReturn(true);
         when(gameRecordRepository.save(any(GameRecord.class))).thenAnswer(invocation -> {
@@ -64,7 +59,7 @@ class GameRecordServiceTest {
             return record;
         });
 
-        GameRecordResponseDto response = gameRecordService.saveGameRecord(request);
+        GameRecordResponseDto response = gameRecordService.saveGameRecord(request, player);
         ArgumentCaptor<GameRecord> savedRecord = ArgumentCaptor.forClass(GameRecord.class);
         verify(gameRecordRepository).save(savedRecord.capture());
         verify(playerProgressService).recordGameResult(player, stage, 900, "WIN", 120);

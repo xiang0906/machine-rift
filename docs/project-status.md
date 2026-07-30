@@ -158,7 +158,7 @@ V14 將 `player_progress`、`player_session`、`player_tower_unlock` 合併至 `
 | --- | --- |
 | 帳號 | `POST /api/auth/register`、`POST /api/auth/login` |
 | Session | `GET /api/auth/me`、`POST /api/auth/logout` |
-| 私人進度 | `GET /api/players/{id}/progress` |
+| 私人進度 | `GET /api/players/me/progress` |
 | 關卡 | `GET /api/stages` |
 | 防禦塔 | `GET /api/towers` |
 | 戰績 | `POST /api/game-records` |
@@ -168,6 +168,8 @@ V14 將 `player_progress`、`player_session`、`player_tower_unlock` 合併至 `
 關卡／防禦塔後台 CRUD、單筆查詢與戰績查詢端點及其輔助程式已移除。
 排行榜由後端選出每位玩家最佳戰績，依分數降冪、時間升冪排列，最多回傳前十名，
 並直接包含排名、玩家名稱、關卡名稱、分數、時間、結果及整體統計。
+私人進度與戰績寫入的玩家身分完全由 Bearer Token 決定；進度網址與戰績 request
+都不再接收 `playerId`。
 所有回應使用統一的 `ApiResponse` 格式，完整 API 可在 `/swagger-ui.html` 查看。
 
 ## 9. 前端現況
@@ -199,13 +201,14 @@ V14 將 `player_progress`、`player_session`、`player_tower_unlock` 合併至 `
 
 ## 10. 測試與品質
 
-目前自動測試共 16 項，涵蓋：
+目前自動測試共 19 項，涵蓋：
 
 - Spring Boot 與 Flyway 啟動
 - 種子資料數量與路線唯一性
 - 塔價格、輸出與射程層級
 - 帳號註冊、登入、登出與 Session
-- 玩家進度、個人最佳與解鎖
+- Token 所屬玩家的進度、戰績寫入、個人最佳與解鎖
+- 舊玩家 ID 進度網址已停用
 - 排行榜登入權限、後端彙整與回應格式
 - 戰績寫入、關卡鎖定、每位玩家最佳戰績與前十名限制
 - V13 升級 V14 時的進度、塔解鎖數量與最新 Session 搬移
@@ -225,8 +228,8 @@ V14 將 `player_progress`、`player_session`、`player_tower_unlock` 合併至 `
 
 ## 12. 建議後續順序
 
-1. 讓私人進度與戰績寫入完全以登入 Token 決定玩家身分，移除請求中的玩家 ID。
-2. 增加 CI，讓 GitHub Push／Pull Request 自動執行測試。
-3. 視課程需求補上 Spring Security Filter Chain。
-4. 統一剩餘 DTO 與 Service 的中文驗證訊息。
-5. 視後續規模再考慮排行榜分頁或 ES Modules。
+1. 增加 CI，讓 GitHub Push／Pull Request 自動執行測試。
+2. 視課程需求補上 Spring Security Filter Chain。
+3. 統一剩餘 DTO 與 Service 的中文驗證訊息。
+4. 視後續規模再考慮排行榜分頁或 ES Modules。
+5. 補上簡短的 Demo 操作與 API 展示腳本。

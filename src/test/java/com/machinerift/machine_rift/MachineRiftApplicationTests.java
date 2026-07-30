@@ -146,7 +146,6 @@ class MachineRiftApplicationTests {
 				.getResponse()
 				.getContentAsString();
 		JsonNode registerJson = objectMapper.readTree(registerResponse);
-		long playerId = registerJson.path("data").path("player").path("playerId").asLong();
 		String accessToken = registerJson.path("data").path("accessToken").asText();
 
 		mockMvc.perform(get("/api/rankings"))
@@ -169,7 +168,7 @@ class MachineRiftApplicationTests {
 				.andExpect(status().isConflict())
 				.andExpect(jsonPath("$.message").value("此玩家名稱已被使用"));
 
-		mockMvc.perform(get("/api/players/{id}/progress", playerId)
+		mockMvc.perform(get("/api/players/me/progress")
 						.header("Authorization", "Bearer " + accessToken))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data.experience").value(0))
@@ -182,20 +181,19 @@ class MachineRiftApplicationTests {
 						.contentType("application/json")
 						.content("""
 								{
-								  "playerId": %d,
 								  "stageId": 1,
 								  "score": 1200,
 								  "result": "WIN",
 								  "playTime": 50
 								}
-								""".formatted(playerId)))
+								"""))
 				.andExpect(status().isCreated());
 
 		mockMvc.perform(post("/api/auth/logout")
 						.header("Authorization", "Bearer " + accessToken))
 				.andExpect(status().isOk());
 
-		mockMvc.perform(get("/api/players/{id}/progress", playerId)
+		mockMvc.perform(get("/api/players/me/progress")
 						.header("Authorization", "Bearer " + accessToken))
 				.andExpect(status().isUnauthorized());
 
@@ -214,7 +212,7 @@ class MachineRiftApplicationTests {
 		String restoredToken = objectMapper.readTree(loginResponse)
 				.path("data").path("accessToken").asText();
 
-		mockMvc.perform(get("/api/players/{id}/progress", playerId)
+		mockMvc.perform(get("/api/players/me/progress")
 						.header("Authorization", "Bearer " + restoredToken))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data.level").value(2))
@@ -241,11 +239,11 @@ class MachineRiftApplicationTests {
 		String replacementToken = objectMapper.readTree(replacementLoginResponse)
 				.path("data").path("accessToken").asText();
 
-		mockMvc.perform(get("/api/players/{id}/progress", playerId)
+		mockMvc.perform(get("/api/players/me/progress")
 						.header("Authorization", "Bearer " + restoredToken))
 				.andExpect(status().isUnauthorized());
 
-		mockMvc.perform(get("/api/players/{id}/progress", playerId)
+		mockMvc.perform(get("/api/players/me/progress")
 						.header("Authorization", "Bearer " + replacementToken))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data.experience").value(1200));

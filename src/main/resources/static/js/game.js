@@ -53,6 +53,7 @@ const START_GOLD = 300;
 const START_BASE_HP = 10;
 const PROJECTILE_SPEED = 320;
 const HIT_RADIUS = 8;
+const TOWER_TURN_SPEED = 7;
 
 let game = null;
 let rafId = null;
@@ -252,7 +253,52 @@ function traceRegularPolygon(radius, sides, rotation = -Math.PI / 2) {
   ctx.closePath();
 }
 
-function drawTowerBody(tower, alpha = 1) {
+function rotateToward(current, target, maxStep) {
+  const delta = Math.atan2(Math.sin(target - current), Math.cos(target - current));
+  return current + Math.max(-maxStep, Math.min(maxStep, delta));
+}
+
+function towerBarrelLength(type) {
+  return ({
+    RAPID: 19,
+    GATLING: 21,
+    BALANCED: 21,
+    ARC: 21,
+    HEAVY: 23,
+    SIEGE: 25,
+  })[type] || 20;
+}
+
+function drawTowerMuzzleFlash(tower, color, now) {
+  if (!(tower.muzzleFlashUntil > now)) return;
+  const life = Math.min(1, (tower.muzzleFlashUntil - now) / 90);
+  const length = towerBarrelLength(tower.type);
+  const positions = tower.type === 'RAPID'
+    ? [[-5, -length], [5, -length]]
+    : tower.type === 'ARC'
+    ? [[-6, -length], [6, -length]]
+    : [[0, -length]];
+
+  ctx.save();
+  ctx.globalAlpha *= life;
+  ctx.fillStyle = '#fff8cf';
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 14;
+  positions.forEach(([x, y]) => {
+    ctx.beginPath();
+    ctx.arc(x, y, 3.5 + life * 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x, y - 2);
+    ctx.lineTo(x, y - 9 - life * 5);
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+
+function drawTowerBody(tower, alpha = 1, now = performance.now()) {
   const color = towerColor(tower.type);
   ctx.save();
   ctx.translate(tower.x, tower.y);
@@ -269,6 +315,14 @@ function drawTowerBody(tower, alpha = 1) {
   ctx.fill();
   ctx.stroke();
   ctx.shadowBlur = 5;
+
+  const aimAngle = Number.isFinite(tower.aimAngle) ? tower.aimAngle : -Math.PI / 2;
+  const recoil = tower.recoilUntil > now
+    ? Math.min(4, (tower.recoilUntil - now) / 130 * 4)
+    : 0;
+  ctx.save();
+  ctx.rotate(aimAngle + Math.PI / 2);
+  ctx.translate(0, recoil);
 
   switch (tower.type) {
     case 'RAPID':
@@ -370,6 +424,8 @@ function drawTowerBody(tower, alpha = 1) {
       ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.fill();
   }
 
+  drawTowerMuzzleFlash(tower, color, now);
+  ctx.restore();
   ctx.restore();
 }
 
@@ -440,6 +496,7 @@ canvas.addEventListener('click', event => {
     x: col * CELL + CELL / 2, y: row * CELL + CELL / 2,
     damage: cfg.damage, attackSpeed: cfg.attackSpeed, range: cfg.attackRange,
     cooldown: 0, name: cfg.towerName, type: cfg.towerType,
+    aimAngle: -Math.PI / 2, muzzleFlashUntil: 0, recoilUntil: 0,
   });
   game.selectedTowerType = null;
   document.querySelectorAll('#towerPanel .tower-btn').forEach(button => {
@@ -535,15 +592,26 @@ function loop(ts) {
 
     game.towers.forEach(t => {
       t.cooldown -= dt;
-      if (t.cooldown > 0) return;
       let target = null, bestProgress = -1;
       game.enemies.forEach(e => {
         const d = Math.hypot(e.x - t.x, e.y - t.y);
         if (d <= t.range && e.pathIdx > bestProgress) { target = e; bestProgress = e.pathIdx; }
       });
       if (target) {
-        game.projectiles.push({ x: t.x, y: t.y, target, damage: t.damage });
-        t.cooldown = 1000 / t.attackSpeed;
+        const desiredAngle = Math.atan2(target.y - t.y, target.x - t.x);
+        t.aimAngle = rotateToward(t.aimAngle, desiredAngle, TOWER_TURN_SPEED * dt / 1000);
+        if (t.cooldown <= 0) {
+          const muzzleDistance = towerBarrelLength(t.type);
+          game.projectiles.push({
+            x: t.x + Math.cos(t.aimAngle) * muzzleDistance,
+            y: t.y + Math.sin(t.aimAngle) * muzzleDistance,
+            target,
+            damage: t.damage,
+          });
+          t.muzzleFlashUntil = ts + 90;
+          t.recoilUntil = ts + 130;
+          t.cooldown = 1000 / t.attackSpeed;
+        }
       }
     });
 
@@ -834,7 +902,7 @@ function draw() {
     game.towers.forEach(t => {
       const hoveringTower = game.hoverCell?.col === t.col && game.hoverCell?.row === t.row;
       if (hoveringTower) drawBuiltTowerRange(t);
-      drawTowerBody(t);
+      drawTowerBody(t, 1, now);
     });
     game.enemies.forEach(e => {
       const healthBarWidth = Math.max(24, e.radius * 2);

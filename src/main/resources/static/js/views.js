@@ -87,9 +87,7 @@ function formatPlayTime(seconds) {
 
 async function openRanking() {
   const listEl = document.getElementById('rankList');
-  const statsEl = document.getElementById('rankingStats');
   const podiumEl = document.getElementById('rankPodium');
-  statsEl.innerHTML = '';
   podiumEl.innerHTML = '';
   listEl.innerHTML = '<div class="ranking-empty">正在載入排行榜...</div>';
   showScreen('ranking');
@@ -98,36 +96,32 @@ async function openRanking() {
     const ranked = ranking.entries;
 
     if (ranked.length === 0) {
-      statsEl.innerHTML = `
-        <div class="ranking-stat"><span>參賽玩家</span><b>0</b></div>
-        <div class="ranking-stat"><span>累積對局</span><b>0</b></div>
-        <div class="ranking-stat"><span>目前最高分</span><b>—</b></div>
-      `;
       listEl.innerHTML = '<div class="ranking-empty">目前還沒有戰績，完成第一場遊戲就能登上榜單。</div>';
       return;
     }
-
-    statsEl.innerHTML = `
-      <div class="ranking-stat"><span>參賽玩家</span><b>${ranking.participantCount}</b></div>
-      <div class="ranking-stat"><span>累積對局</span><b>${ranking.totalGameCount}</b></div>
-      <div class="ranking-stat"><span>目前最高分</span><b>${ranked[0].score.toLocaleString()} 分</b></div>
-    `;
 
     const medals = ['🥇', '🥈', '🥉'];
     podiumEl.innerHTML = ranked.slice(0, 3).map((record, index) => {
       const playerName = record.playerName;
       const initial = Array.from(playerName.trim())[0] || '?';
+      const won = record.result.toUpperCase() === 'WIN';
       return `
         <div class="podium-card rank-${index + 1}">
+          <div class="podium-rank-label">第 ${index + 1} 名</div>
           <div class="podium-medal">${medals[index]}</div>
           <div class="rank-avatar">${escapeHtml(initial.toUpperCase())}</div>
           <div class="podium-name" title="${escapeHtml(playerName)}">${escapeHtml(playerName)}</div>
           <div class="podium-score">${record.score.toLocaleString()} 分</div>
           <div class="podium-meta">${escapeHtml(record.stageName)}</div>
+          <div class="podium-detail">
+            <span>${formatPlayTime(record.playTime)}</span>
+            <span class="${won ? 'win' : 'lose'}">${won ? '勝利' : '失敗'}</span>
+          </div>
         </div>
       `;
     }).join('');
 
+    const highestScore = Math.max(1, ranked[0].score);
     listEl.innerHTML = ranked.map(record => {
       const playerName = record.playerName;
       const stageName = record.stageName;
@@ -135,24 +129,27 @@ async function openRanking() {
       const won = record.result.toUpperCase() === 'WIN';
       const resultClass = won ? 'win' : 'lose';
       const resultText = won ? '勝利' : '失敗';
+      const scorePercent = Math.min(100, Math.max(4, Math.round(record.score / highestScore * 100)));
       return `
-      <div class="rank-row">
+      <div class="rank-row${record.rank <= 3 ? ` top-rank top-${record.rank}` : ''}">
         <div class="rank-position">#${record.rank}</div>
         <div class="rank-avatar">${escapeHtml(initial.toUpperCase())}</div>
         <div>
           <div class="rank-name">${escapeHtml(playerName)}</div>
-          <div class="rank-detail">${escapeHtml(stageName)} · ${formatPlayTime(record.playTime)}</div>
+          <div class="rank-detail">最佳紀錄 · ${formatPlayTime(record.playTime)}</div>
         </div>
         <div class="rank-badges">
           <span class="rank-tag">${escapeHtml(stageName)}</span>
           <span class="rank-tag ${resultClass}">${resultText}</span>
         </div>
-        <div class="rank-score">${record.score.toLocaleString()} 分</div>
+        <div class="rank-score-wrap">
+          <div class="rank-score">${record.score.toLocaleString()} 分</div>
+          <div class="rank-score-track"><i style="width:${scorePercent}%"></i></div>
+        </div>
       </div>
     `;
     }).join('');
   } catch (e) {
-    statsEl.innerHTML = '';
     podiumEl.innerHTML = '';
     listEl.innerHTML = `<div class="ranking-empty">載入排行榜失敗：${escapeHtml(e.message)}</div>`;
   }

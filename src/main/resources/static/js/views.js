@@ -171,9 +171,10 @@ function renderStageList() {
       : s.progress?.bestScore == null
       ? '尚無紀錄'
       : `最佳 ${s.progress.bestScore} 分 / ${s.progress.bestPlayTime} 秒`;
-    const buttonText = !unlocked ? '已鎖定' : ready ? '開始' : '尚未設定';
     return `
-    <div class="stage-card${unlocked ? '' : ' locked'}" data-id="${s.stageId}">
+    <div class="stage-card${canEnter ? ' can-enter' : ' locked'}" data-id="${s.stageId}"
+      role="button" tabindex="${canEnter ? '0' : '-1'}" aria-disabled="${!canEnter}"
+      aria-label="${escapeHtml(s.stageName)}，${canEnter ? '點擊進入任務簡報' : '目前無法進入'}">
       <div class="stage-card-header">
         <div class="name">${escapeHtml(s.stageName)}</div>
         <span class="difficulty">${escapeHtml(s.difficulty)}</span>
@@ -186,13 +187,12 @@ function renderStageList() {
       </div>
       <div class="stage-card-footer">
         <span class="stage-best">${best}</span>
-        <button class="btn-primary" ${canEnter ? '' : 'disabled'}>${buttonText}</button>
       </div>
     </div>
   `;
   }).join('');
   listEl.querySelectorAll('.stage-card').forEach(card => {
-    card.addEventListener('click', () => {
+    const enterStage = () => {
       const id = Number(card.dataset.id);
       const stage = state.stages.find(s => s.stageId === id);
       if (!stage || stage.progress?.unlocked !== true
@@ -200,6 +200,12 @@ function renderStageList() {
           || !Array.isArray(stage.waves) || stage.waves.length === 0) return;
       state.selectedStage = stage;
       openMissionBriefing(stage);
+    };
+    card.addEventListener('click', enterStage);
+    card.addEventListener('keydown', event => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      enterStage();
     });
   });
 }

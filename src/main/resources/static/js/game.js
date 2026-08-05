@@ -151,24 +151,32 @@ function renderTowerPanel() {
   const panel = document.getElementById('towerPanel');
   const sortSelect = document.getElementById('towerSortSelect');
   sortSelect.value = state.towerSort;
-  document.getElementById('towerCount').textContent = `已解鎖 ${state.towers.length} 座`;
+  document.getElementById('towerCount').textContent = state.towers.length > 3
+    ? `已解鎖 ${state.towers.length} 座 · 上下捲動`
+    : `已解鎖 ${state.towers.length} 座`;
   panel.innerHTML = sortedTowers().map(t => {
     const selected = game?.selectedTowerType === t.towerId;
     const unaffordable = game && game.gold < t.cost;
     return `
-    <button class="tower-btn${selected ? ' selected' : ''}${unaffordable ? ' unaffordable' : ''}" data-id="${t.towerId}" style="border-color:${towerColor(t.towerType)}55">
-      <span class="tower-title">
-        <b>${t.towerName}</b>
-        <span class="tower-status">
-          <span class="tower-role">${towerRoleLabel(t.towerType)}</span>
-          <span class="tower-selected-label">✓ 已選擇</span>
+    <button class="tower-btn${selected ? ' selected' : ''}${unaffordable ? ' unaffordable' : ''}"
+      data-id="${t.towerId}" aria-pressed="${selected}" aria-label="${t.towerName}，造價 ${t.cost} 金幣"
+      style="--tower-color:${towerColor(t.towerType)};border-color:${towerColor(t.towerType)}55">
+      <span class="tower-identity">
+        <span class="tower-card-icon" aria-hidden="true">${towerIconLabel(t.towerType)}</span>
+        <span class="tower-title">
+          <b>${t.towerName}</b>
+          <span class="tower-status">
+            <span class="tower-role">${towerRoleLabel(t.towerType)}</span>
+            <span class="tower-selected-label">✓ 已選擇</span>
+            <span class="tower-unaffordable-label">金幣不足</span>
+          </span>
         </span>
       </span>
       <span class="tower-details">
-        <span class="tower-cost">${t.cost}G</span>
-        <span>傷 ${t.damage}</span>
-        <span>速 ${t.attackSpeed}</span>
-        <span>射程 ${t.attackRange}</span>
+        <span class="tower-stat tower-cost"><small>造價</small><b>${t.cost}G</b></span>
+        <span class="tower-stat"><small>傷害</small><b>${t.damage}</b></span>
+        <span class="tower-stat"><small>攻速</small><b>${t.attackSpeed}</b></span>
+        <span class="tower-stat"><small>射程</small><b>${t.attackRange}</b></span>
       </span>
     </button>
   `;
@@ -179,7 +187,9 @@ function renderTowerPanel() {
       game.selectedTowerType = game.selectedTowerType === id ? null : id;
       const selectedTower = state.towers.find(t => t.towerId === game.selectedTowerType);
       panel.querySelectorAll('.tower-btn').forEach(b => {
-        b.classList.toggle('selected', Number(b.dataset.id) === game.selectedTowerType);
+        const isSelected = Number(b.dataset.id) === game.selectedTowerType;
+        b.classList.toggle('selected', isSelected);
+        b.setAttribute('aria-pressed', String(isSelected));
       });
       document.getElementById('gameHint').textContent = selectedTower
         ? `已選擇「${selectedTower.towerName}」：將游標移到地圖，綠色可建造、紅色不可建造。`
@@ -208,6 +218,17 @@ function towerRoleLabel(type) {
   })[type] || '標準型';
 }
 
+function towerIconLabel(type) {
+  return ({
+    RAPID: '脈',
+    GATLING: '機',
+    BALANCED: '量',
+    ARC: '弧',
+    HEAVY: '軌',
+    SIEGE: '重',
+  })[type] || '塔';
+}
+
 function towerColor(type) {
   return ({
     RAPID: '#4dd0e1',
@@ -217,6 +238,155 @@ function towerColor(type) {
     HEAVY: '#ff7043',
     SIEGE: '#ec407a',
   })[type] || '#4dd0e1';
+}
+
+function traceRegularPolygon(radius, sides, rotation = -Math.PI / 2) {
+  ctx.beginPath();
+  for (let index = 0; index < sides; index++) {
+    const angle = rotation + index * Math.PI * 2 / sides;
+    const x = Math.cos(angle) * radius;
+    const y = Math.sin(angle) * radius;
+    if (index === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+}
+
+function drawTowerBody(tower, alpha = 1) {
+  const color = towerColor(tower.type);
+  ctx.save();
+  ctx.translate(tower.x, tower.y);
+  ctx.globalAlpha = alpha;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 9;
+
+  // Shared mounting plate keeps every tower anchored to the grid.
+  ctx.fillStyle = '#07121f';
+  ctx.strokeStyle = 'rgba(194, 230, 240, 0.34)';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.arc(0, 0, 16, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.shadowBlur = 5;
+
+  switch (tower.type) {
+    case 'RAPID':
+      // Twin pulse emitters.
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-5, -5); ctx.lineTo(-5, -18);
+      ctx.moveTo(5, -5); ctx.lineTo(5, -18);
+      ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(0, 1, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#d8fbff';
+      ctx.beginPath(); ctx.arc(0, 1, 2.8, 0, Math.PI * 2); ctx.fill();
+      break;
+
+    case 'GATLING':
+      // Three slim barrels and a hexagonal motor housing.
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.2;
+      ctx.lineCap = 'square';
+      ctx.beginPath();
+      ctx.moveTo(-6, -5); ctx.lineTo(-6, -18);
+      ctx.moveTo(0, -7); ctx.lineTo(0, -20);
+      ctx.moveTo(6, -5); ctx.lineTo(6, -18);
+      ctx.stroke();
+      ctx.fillStyle = color;
+      traceRegularPolygon(10, 6);
+      ctx.fill();
+      ctx.fillStyle = '#0c342b';
+      ctx.beginPath(); ctx.arc(0, 0, 3.5, 0, Math.PI * 2); ctx.fill();
+      break;
+
+    case 'BALANCED':
+      // Diamond core with one precise energy barrel.
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(0, -6); ctx.lineTo(0, -20); ctx.stroke();
+      ctx.fillStyle = color;
+      traceRegularPolygon(11, 4, 0);
+      ctx.fill();
+      ctx.fillStyle = '#dfd4ff';
+      traceRegularPolygon(4, 4, 0);
+      ctx.fill();
+      break;
+
+    case 'ARC':
+      // Split conductors make the electric tower readable at a glance.
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-3, 2); ctx.lineTo(-9, -13); ctx.lineTo(-6, -19);
+      ctx.moveTo(3, 2); ctx.lineTo(9, -13); ctx.lineTo(6, -19);
+      ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(0, 3, 7, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff3b0';
+      ctx.beginPath(); ctx.arc(-6, -19, 2.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(6, -19, 2.5, 0, Math.PI * 2); ctx.fill();
+      break;
+
+    case 'HEAVY':
+      // A broad square chassis and oversized single cannon.
+      ctx.fillStyle = color;
+      ctx.fillRect(-5, -21, 10, 16);
+      ctx.fillStyle = '#8f2f18';
+      ctx.fillRect(-2, -20, 4, 13);
+      ctx.fillStyle = color;
+      ctx.fillRect(-11, -9, 22, 18);
+      ctx.strokeStyle = '#ffc2ad';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-8, -6, 16, 12);
+      break;
+
+    case 'SIEGE':
+      // Large octagonal base, reinforced braces and a siege barrel.
+      ctx.fillStyle = color;
+      traceRegularPolygon(13, 8);
+      ctx.fill();
+      ctx.fillStyle = '#651536';
+      traceRegularPolygon(8, 8);
+      ctx.fill();
+      ctx.fillStyle = color;
+      ctx.fillRect(-5, -23, 10, 18);
+      ctx.strokeStyle = '#ffb5d2';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-12, 8); ctx.lineTo(-17, 13);
+      ctx.moveTo(12, 8); ctx.lineTo(17, 13);
+      ctx.stroke();
+      ctx.fillStyle = '#ffd4e5';
+      ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2); ctx.fill();
+      break;
+
+    default:
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+function drawBuiltTowerRange(tower) {
+  const color = towerColor(tower.type);
+  ctx.save();
+  ctx.fillStyle = `${color}0d`;
+  ctx.beginPath();
+  ctx.arc(tower.x, tower.y, tower.range, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.setLineDash([5, 5]);
+  ctx.strokeStyle = `${color}99`;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(tower.x, tower.y, tower.range, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
 }
 
 function canvasCellFromPointer(event) {
@@ -437,22 +607,186 @@ function loop(ts) {
   if (!game.ended) rafId = requestAnimationFrame(loop);
 }
 
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+function traceRoute(route) {
+  if (!route || route.length === 0) return;
+  ctx.beginPath();
+  route.forEach((point, index) => {
+    const x = point.c * CELL + CELL / 2;
+    const y = point.r * CELL + CELL / 2;
+    if (index === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+}
+
+function drawBattlefieldBase(now) {
+  const baseGradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  baseGradient.addColorStop(0, '#071426');
+  baseGradient.addColorStop(0.55, '#0b1b31');
+  baseGradient.addColorStop(1, '#07111f');
+  ctx.fillStyle = baseGradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const glow = ctx.createRadialGradient(
+    canvas.width * 0.55, canvas.height * 0.42, 20,
+    canvas.width * 0.55, canvas.height * 0.42, canvas.width * 0.58,
+  );
+  glow.addColorStop(0, 'rgba(38, 115, 160, 0.13)');
+  glow.addColorStop(1, 'rgba(4, 10, 20, 0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Faint circuit traces make the board feel like a powered machine surface.
   ctx.save();
-  if (game && performance.now() < game.shakeUntil) {
-    ctx.translate((Math.random() - 0.5) * 7, (Math.random() - 0.5) * 7);
+  ctx.strokeStyle = 'rgba(77, 208, 225, 0.055)';
+  ctx.fillStyle = 'rgba(77, 208, 225, 0.12)';
+  ctx.lineWidth = 1;
+  const pulse = 0.65 + Math.sin(now / 900) * 0.2;
+  ctx.globalAlpha = pulse;
+  for (let row = 0; row < ROWS; row += 2) {
+    const y = row * CELL + 12;
+    const offset = row % 4 === 0 ? 18 : 42;
+    ctx.beginPath();
+    ctx.moveTo(offset, y);
+    ctx.lineTo(offset + 72, y);
+    ctx.lineTo(offset + 88, y + 16);
+    ctx.lineTo(offset + 142, y + 16);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(offset + 142, y + 16, 2, 0, Math.PI * 2);
+    ctx.fill();
   }
+  ctx.restore();
+}
+
+function drawGridSurface() {
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
       const onPath = game && game.pathCells.has(c + ',' + r);
-      ctx.fillStyle = onPath ? '#2c4468' : ((r + c) % 2 === 0 ? '#12213a' : '#0f1c32');
+      if (onPath) {
+        ctx.fillStyle = (r + c) % 2 === 0 ? 'rgba(28, 54, 82, 0.76)' : 'rgba(24, 48, 75, 0.76)';
+      } else {
+        ctx.fillStyle = (r + c) % 2 === 0 ? 'rgba(18, 37, 61, 0.72)' : 'rgba(13, 29, 49, 0.72)';
+      }
       ctx.fillRect(c * CELL, r * CELL, CELL, CELL);
+
+      if (!onPath) {
+        ctx.fillStyle = 'rgba(255,255,255,0.025)';
+        ctx.fillRect(c * CELL + 2, r * CELL + 2, CELL - 4, 1);
+        ctx.fillRect(c * CELL + 2, r * CELL + 2, 1, CELL - 4);
+        ctx.fillStyle = 'rgba(0,0,0,0.09)';
+        ctx.fillRect(c * CELL + 3, (r + 1) * CELL - 3, CELL - 6, 1);
+      }
     }
   }
-  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+}
+
+function drawPathLayer(now) {
+  if (!game?.route?.length) return;
+
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  ctx.shadowColor = '#35b9df';
+  ctx.shadowBlur = 18;
+  ctx.strokeStyle = 'rgba(40, 161, 203, 0.24)';
+  ctx.lineWidth = 44;
+  traceRoute(game.route);
+  ctx.stroke();
+
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = '#263f5d';
+  ctx.lineWidth = 37;
+  traceRoute(game.route);
+  ctx.stroke();
+
+  const roadGradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  roadGradient.addColorStop(0, '#355574');
+  roadGradient.addColorStop(0.5, '#2c4968');
+  roadGradient.addColorStop(1, '#233d5d');
+  ctx.strokeStyle = roadGradient;
+  ctx.lineWidth = 29;
+  traceRoute(game.route);
+  ctx.stroke();
+
+  // Deployment guidance is only needed before the first wave starts.
+  if (!game.startedAt) {
+    ctx.setLineDash([5, 9]);
+    ctx.lineDashOffset = -(now / 55) % 14;
+    ctx.strokeStyle = 'rgba(111, 219, 238, 0.48)';
+    ctx.lineWidth = 1.5;
+    traceRoute(game.route);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    const arrowOffset = Math.floor(now / 110) % 20;
+    for (let index = 9 + arrowOffset; index < game.pathPoints.length - 5; index += 24) {
+      const point = game.pathPoints[index];
+      const next = game.pathPoints[Math.min(index + 3, game.pathPoints.length - 1)];
+      const angle = Math.atan2(next.y - point.y, next.x - point.x);
+      ctx.save();
+      ctx.translate(point.x, point.y);
+      ctx.rotate(angle);
+      ctx.strokeStyle = 'rgba(128, 222, 234, 0.55)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(-5, -4);
+      ctx.lineTo(1, 0);
+      ctx.lineTo(-5, 4);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+  ctx.restore();
+}
+
+function drawBuildableCells() {
+  if (!game) return;
+  const selectingTower = game.selectedTowerType != null;
+
+  ctx.save();
+  for (let row = 0; row < ROWS; row++) {
+    for (let col = 0; col < COLS; col++) {
+      const occupied = game.towers.some(tower => tower.col === col && tower.row === row);
+      if (game.pathCells.has(col + ',' + row) || occupied) continue;
+
+      const x = col * CELL;
+      const y = row * CELL;
+      const inset = 7;
+      const arm = selectingTower ? 7 : 4;
+      ctx.strokeStyle = selectingTower
+        ? 'rgba(105, 240, 174, 0.34)'
+        : 'rgba(118, 176, 199, 0.11)';
+      ctx.lineWidth = selectingTower ? 1.4 : 1;
+      ctx.beginPath();
+      ctx.moveTo(x + inset, y + inset + arm); ctx.lineTo(x + inset, y + inset); ctx.lineTo(x + inset + arm, y + inset);
+      ctx.moveTo(x + CELL - inset - arm, y + CELL - inset); ctx.lineTo(x + CELL - inset, y + CELL - inset); ctx.lineTo(x + CELL - inset, y + CELL - inset - arm);
+      ctx.stroke();
+
+      if (selectingTower) {
+        ctx.fillStyle = 'rgba(105, 240, 174, 0.035)';
+        ctx.fillRect(x + 4, y + 4, CELL - 8, CELL - 8);
+      }
+    }
+  }
+  ctx.restore();
+}
+
+function draw() {
+  const now = performance.now();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  if (game && now < game.shakeUntil) {
+    ctx.translate((Math.random() - 0.5) * 7, (Math.random() - 0.5) * 7);
+  }
+  drawBattlefieldBase(now);
+  drawGridSurface();
+  drawPathLayer(now);
+  ctx.strokeStyle = 'rgba(157, 206, 224, 0.07)';
+  ctx.lineWidth = 1;
   for (let c = 0; c <= COLS; c++) { ctx.beginPath(); ctx.moveTo(c * CELL, 0); ctx.lineTo(c * CELL, ROWS * CELL); ctx.stroke(); }
   for (let r = 0; r <= ROWS; r++) { ctx.beginPath(); ctx.moveTo(0, r * CELL); ctx.lineTo(COLS * CELL, r * CELL); ctx.stroke(); }
+  drawBuildableCells();
 
   if (game) {
     const route = game.route;
@@ -498,16 +832,15 @@ function draw() {
     drawTowerPlacementPreview();
 
     game.towers.forEach(t => {
-      ctx.fillStyle = towerColor(t.type);
-      ctx.beginPath(); ctx.arc(t.x, t.y, 14, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = `${towerColor(t.type)}33`;
-      ctx.beginPath(); ctx.arc(t.x, t.y, t.range, 0, Math.PI * 2); ctx.stroke();
+      const hoveringTower = game.hoverCell?.col === t.col && game.hoverCell?.row === t.row;
+      if (hoveringTower) drawBuiltTowerRange(t);
+      drawTowerBody(t);
     });
     game.enemies.forEach(e => {
       const healthBarWidth = Math.max(24, e.radius * 2);
       const healthBarX = e.x - healthBarWidth / 2;
       const healthBarY = e.y - e.radius - 8;
-      ctx.fillStyle = e.hitFlashUntil > performance.now() ? '#ffffff' : enemyColor(e.name);
+      ctx.fillStyle = e.hitFlashUntil > now ? '#ffffff' : enemyColor(e.name);
       ctx.beginPath(); ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = 'rgba(255,255,255,0.2)';
       ctx.fillRect(healthBarX, healthBarY, healthBarWidth, 4);
@@ -531,12 +864,21 @@ function draw() {
       ctx.restore();
     });
   }
+  const vignette = ctx.createRadialGradient(
+    canvas.width / 2, canvas.height / 2, canvas.height * 0.2,
+    canvas.width / 2, canvas.height / 2, canvas.width * 0.62,
+  );
+  vignette.addColorStop(0, 'rgba(0,0,0,0)');
+  vignette.addColorStop(1, 'rgba(0,4,12,0.34)');
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.restore();
 }
 
 function drawTowerPlacementPreview() {
   if (!game.hoverCell || !game.selectedTowerType) return;
   const { col, row } = game.hoverCell;
+  if (game.towers.some(tower => tower.col === col && tower.row === row)) return;
   const placement = towerPlacementStatus(col, row);
   if (!placement.cfg) return;
 
@@ -559,11 +901,7 @@ function drawTowerPlacementPreview() {
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
-  ctx.globalAlpha = 0.75;
-  ctx.fillStyle = towerColor(placement.cfg.towerType);
-  ctx.beginPath();
-  ctx.arc(x, y, 14, 0, Math.PI * 2);
-  ctx.fill();
+  drawTowerBody({ x, y, type: placement.cfg.towerType }, 0.78);
   ctx.restore();
 }
 

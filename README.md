@@ -6,7 +6,8 @@ Machine Rift 是一款塔防遊戲。這個倉庫包含：
 - 前端遊戲畫面（`src/main/resources/static/`）：Canvas 繪製的最小可玩塔防切片，實際呼叫後端 API
 
 完整架構、資料模型、功能邊界與後續建議請參考
-[`docs/project-status.md`](docs/project-status.md)。
+[`docs/project-status.md`](docs/project-status.md)；逐一說明程式與檔案責任的導覽請參考
+[`docs/file-guide.md`](docs/file-guide.md)。
 
 ## 技術棧
 - Java 21

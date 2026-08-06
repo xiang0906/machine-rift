@@ -59,7 +59,7 @@ class MachineRiftApplicationTests {
 	}
 
 	@Test
-	void databaseSchemaUsesEightBusinessTables() {
+	void databaseSchemaUsesNineBusinessTables() {
 		Set<String> businessTables = Set.copyOf(jdbcTemplate.queryForList("""
 				SELECT LOWER(TABLE_NAME)
 				FROM INFORMATION_SCHEMA.TABLES
@@ -71,6 +71,7 @@ class MachineRiftApplicationTests {
 		assertEquals(Set.of(
 				"player",
 				"player_stage_progress",
+				"player_tower_unlock",
 				"stage",
 				"stage_path",
 				"stage_wave",
@@ -132,7 +133,9 @@ class MachineRiftApplicationTests {
 
 		mockMvc.perform(get("/api/towers"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.message").value("已取得防禦塔列表"));
+				.andExpect(jsonPath("$.message").value("已取得防禦塔列表"))
+				.andExpect(jsonPath("$.data[0].unlockCost").value(0))
+				.andExpect(jsonPath("$.data[1].unlockCost").value(250));
 	}
 
 	@Test
@@ -200,6 +203,66 @@ class MachineRiftApplicationTests {
 								"""))
 				.andExpect(status().isCreated());
 
+		mockMvc.perform(get("/api/rankings")
+						.param("stageId", "1")
+						.header("Authorization", "Bearer " + accessToken))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.participantCount").value(1))
+				.andExpect(jsonPath("$.data.totalGameCount").value(1))
+				.andExpect(jsonPath("$.data.entries[0].stageName").value("裂隙前線"))
+				.andExpect(jsonPath("$.data.entries[0].score").value(1200));
+
+		mockMvc.perform(get("/api/rankings")
+						.param("stageId", "999")
+						.header("Authorization", "Bearer " + accessToken))
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.message").value("找不到指定的關卡，ID：999"));
+
+		String towerListResponse = mockMvc.perform(get("/api/towers"))
+				.andExpect(status().isOk())
+				.andReturn()
+				.getResponse()
+				.getContentAsString();
+		long purchasableTowerId = objectMapper.readTree(towerListResponse)
+				.path("data").path(1).path("towerId").asLong();
+		String towerUnlockPath = "/api/towers/" + purchasableTowerId + "/unlock";
+
+		mockMvc.perform(post(towerUnlockPath)
+						.header("Authorization", "Bearer " + accessToken))
+				.andExpect(status().isConflict())
+				.andExpect(jsonPath("$.message").value("永久戰備金不足，需要 250 G"));
+
+		for (int repeat = 0; repeat < 2; repeat++) {
+			mockMvc.perform(post("/api/game-records")
+							.header("Authorization", "Bearer " + accessToken)
+							.contentType("application/json")
+							.content("""
+									{
+									  "stageId": 1,
+									  "score": 0,
+									  "result": "WIN",
+									  "playTime": 70
+									}
+									"""))
+					.andExpect(status().isCreated());
+		}
+
+		mockMvc.perform(post(towerUnlockPath))
+				.andExpect(status().isUnauthorized());
+
+		mockMvc.perform(post(towerUnlockPath)
+						.header("Authorization", "Bearer " + accessToken))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.message").value("防禦塔解鎖成功"))
+				.andExpect(jsonPath("$.data.towerName").value("離子機槍塔"))
+				.andExpect(jsonPath("$.data.unlockCost").value(250))
+				.andExpect(jsonPath("$.data.remainingGold").value(50));
+
+		mockMvc.perform(post(towerUnlockPath)
+						.header("Authorization", "Bearer " + accessToken))
+				.andExpect(status().isConflict())
+				.andExpect(jsonPath("$.message").value("此防禦塔已經解鎖"));
+
 		mockMvc.perform(post("/api/auth/logout")
 						.header("Authorization", "Bearer " + accessToken))
 				.andExpect(status().isOk())
@@ -230,7 +293,7 @@ class MachineRiftApplicationTests {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data.level").value(2))
 				.andExpect(jsonPath("$.data.experience").value(1200))
-				.andExpect(jsonPath("$.data.gold").value(100))
+				.andExpect(jsonPath("$.data.gold").value(50))
 				.andExpect(jsonPath("$.data.completedStages").value(1))
 				.andExpect(jsonPath("$.data.stages[0].bestScore").value(1200))
 				.andExpect(jsonPath("$.data.stages[0].bestPlayTime").value(50))

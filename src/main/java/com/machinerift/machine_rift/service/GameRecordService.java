@@ -74,13 +74,21 @@ public class GameRecordService {
     }
 
     /**
-     * Returns at most ten players, using each player's best score and shortest
-     * play time as the tie breaker.
+     * Returns at most ten players, optionally limited to one stage, using each
+     * player's best score and shortest play time as the tie breaker.
      */
     @Transactional(readOnly = true)
-    public RankingResponseDto getRankings() {
-        List<GameRecord> orderedRecords =
-                gameRecordRepository.findAllByOrderByScoreDescPlayTimeAscRecordIdAsc();
+    public RankingResponseDto getRankings(Long stageId) {
+        List<GameRecord> orderedRecords;
+        if (stageId == null) {
+            orderedRecords = gameRecordRepository.findAllByOrderByScoreDescPlayTimeAscRecordIdAsc();
+        } else {
+            Stage stage = stageRepository.findById(stageId)
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "找不到指定的關卡，ID：" + stageId));
+            orderedRecords = gameRecordRepository
+                    .findAllByStageOrderByScoreDescPlayTimeAscRecordIdAsc(stage);
+        }
         Set<Long> participantIds = new HashSet<>();
         List<RankingEntryResponseDto> entries = new ArrayList<>();
 

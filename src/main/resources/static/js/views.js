@@ -1,4 +1,4 @@
-// Login, registration, stage selection, and ranking views.
+// Login, registration, lobby, workshop, stage selection, and records center views.
 // ---------- Account login ----------
 document.getElementById('btnLogin').addEventListener('click', async () => {
   const username = document.getElementById('usernameInput').value.trim();
@@ -53,19 +53,40 @@ document.getElementById('registerPasswordConfirmInput').addEventListener('keydow
   if (event.key === 'Enter') document.getElementById('btnCreateAccount').click();
 });
 
-document.getElementById('btnShowRanking').addEventListener('click', async () => {
-  await openRanking();
+function renderLobby() {
+  const progress = state.progress;
+  if (!progress) return;
+  document.getElementById('lobbyPlayerName').textContent = state.playerName;
+  document.getElementById('lobbyLevel').textContent = progress.level;
+  document.getElementById('lobbyGold').textContent = progress.gold.toLocaleString();
+  document.getElementById('lobbyStages').textContent =
+    `${progress.completedStages} / ${state.stages.length}`;
+  document.getElementById('lobbyTowers').textContent =
+    `${progress.unlockedTowers.length} / ${state.totalTowerCount}`;
+}
+
+document.getElementById('btnLobbyStages').addEventListener('click', () => {
+  renderStageList();
+  showScreen('stages');
 });
-document.getElementById('btnShowHistory').addEventListener('click', async () => {
-  await openHistory();
+document.getElementById('btnLobbyWorkshop').addEventListener('click', () => {
+  renderTowerWorkshop();
+  showScreen('workshop');
 });
-document.getElementById('btnBackFromRanking').addEventListener('click', () => {
-  showScreen(state.accessToken ? 'stages' : 'start');
+document.getElementById('btnLobbyRecords').addEventListener('click', async () => {
+  await openRecordsCenter('history');
 });
-document.getElementById('btnBackFromHistory').addEventListener('click', () => {
-  showScreen(state.accessToken ? 'stages' : 'start');
+document.getElementById('btnBackFromRecords').addEventListener('click', () => {
+  showScreen(state.accessToken ? 'lobby' : 'start');
 });
-document.getElementById('btnBackToStart').addEventListener('click', async () => {
+document.getElementById('btnBackFromWorkshop').addEventListener('click', () => {
+  renderLobby();
+  showScreen('lobby');
+});
+document.getElementById('btnBackToLobby').addEventListener('click', () => {
+  showScreen('lobby');
+});
+document.getElementById('btnLogout').addEventListener('click', async () => {
   try {
     await api('POST', '/api/auth/logout');
   } catch (ignored) {
@@ -104,10 +125,127 @@ function formatRecordDate(value) {
   }).format(date);
 }
 
-async function openHistory() {
+function renderTowerWorkshop(message = '', messageType = '', purchasing = false) {
+  if (!state.progress) return;
+  const gold = Number(state.progress.gold) || 0;
+  const unlockedTowerIds = new Set(
+    state.progress.unlockedTowers.map(tower => tower.towerId)
+  );
+  document.getElementById('workshopGold').textContent = gold.toLocaleString();
+  const noticeEl = document.getElementById('workshopNotice');
+  noticeEl.textContent = message;
+  noticeEl.className = `workshop-notice${messageType ? ` ${messageType}` : ''}`;
+
+  const listEl = document.getElementById('workshopTowerList');
+  listEl.innerHTML = state.allTowers.map(tower => {
+    const unlocked = unlockedTowerIds.has(tower.towerId);
+    const affordable = gold >= tower.unlockCost;
+    const actionText = unlocked
+      ? '✓ 已永久解鎖'
+      : affordable
+      ? `永久解鎖 ${tower.unlockCost.toLocaleString()} G`
+      : `尚缺 ${(tower.unlockCost - gold).toLocaleString()} G`;
+    return `
+      <article class="workshop-card${unlocked ? ' unlocked' : ''}${!affordable ? ' unaffordable' : ''}"
+        style="--tower-color:${towerColor(tower.towerType)}">
+        <div class="workshop-tower-head">
+          <span class="workshop-tower-icon" aria-hidden="true">${towerIconLabel(tower.towerType)}</span>
+          <div>
+            <span>${towerRoleLabel(tower.towerType)}</span>
+            <strong>${escapeHtml(tower.towerName)}</strong>
+          </div>
+          <span class="workshop-state">${unlocked ? '已解鎖' : '未解鎖'}</span>
+        </div>
+        <div class="workshop-stats">
+          <span><small>傷害</small><b>${tower.damage}</b></span>
+          <span><small>攻速</small><b>${tower.attackSpeed}</b></span>
+          <span><small>射程</small><b>${tower.attackRange}</b></span>
+          <span><small>戰場造價</small><b>${tower.cost} G</b></span>
+        </div>
+        <div class="workshop-purchase-row">
+          <div><small>永久解鎖價格</small><b>${tower.unlockCost === 0 ? '起始配發' : `${tower.unlockCost.toLocaleString()} G`}</b></div>
+          <button class="workshop-buy" data-id="${tower.towerId}"
+            ${unlocked || !affordable || purchasing ? 'disabled' : ''}>${actionText}</button>
+        </div>
+      </article>
+    `;
+  }).join('');
+
+  listEl.querySelectorAll('.workshop-buy:not(:disabled)').forEach(button => {
+    button.addEventListener('click', () => purchaseTower(Number(button.dataset.id)));
+  });
+}
+
+async function purchaseTower(towerId) {
+  const tower = state.allTowers.find(item => item.towerId === towerId);
+  if (!tower) return;
+  const confirmed = await confirmAction({
+    badge: '防禦塔工坊',
+    title: `解鎖「${tower.towerName}」`,
+    message: `將使用 ${tower.unlockCost.toLocaleString()} G 永久戰備金，解鎖後即可在所有關卡配置這座塔。`,
+    confirmLabel: '確認解鎖',
+    cancelLabel: '返回工坊',
+  });
+  if (!confirmed) return;
+
+  renderTowerWorkshop('正在處理解鎖，請稍候...', 'pending', true);
+  try {
+    const result = await api('POST', `/api/towers/${towerId}/unlock`);
+    await loadPlayerContent();
+    renderLobby();
+    renderTowerWorkshop(
+      `「${result.towerName}」已永久解鎖，剩餘 ${result.remainingGold.toLocaleString()} G。`,
+      'success'
+    );
+  } catch (error) {
+    if (!state.accessToken) {
+      showScreen('start', { replaceRoute: true });
+      return;
+    }
+    renderTowerWorkshop(`解鎖失敗：${error.message}`, 'error');
+  }
+}
+
+function selectRecordsTab(tab) {
+  const rankingSelected = tab === 'ranking';
+  const historyButton = document.getElementById('btnRecordsHistory');
+  const rankingButton = document.getElementById('btnRecordsRanking');
+  historyButton.classList.toggle('active', !rankingSelected);
+  rankingButton.classList.toggle('active', rankingSelected);
+  historyButton.setAttribute('aria-selected', String(!rankingSelected));
+  rankingButton.setAttribute('aria-selected', String(rankingSelected));
+  historyButton.tabIndex = rankingSelected ? -1 : 0;
+  rankingButton.tabIndex = rankingSelected ? 0 : -1;
+  document.getElementById('recordsHistoryPanel').hidden = rankingSelected;
+  document.getElementById('recordsRankingPanel').hidden = !rankingSelected;
+}
+
+async function openRecordsCenter(tab = 'history', { replaceRoute = false } = {}) {
+  selectRecordsTab(tab);
+  showScreen('records', { replaceRoute });
+  if (tab === 'ranking') await loadRanking();
+  else await loadHistory();
+}
+
+document.getElementById('btnRecordsHistory').addEventListener('click', async () => {
+  await openRecordsCenter('history');
+});
+document.getElementById('btnRecordsRanking').addEventListener('click', async () => {
+  await openRecordsCenter('ranking');
+});
+document.querySelector('.records-tabs').addEventListener('keydown', async event => {
+  if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+  event.preventDefault();
+  const nextTab = document.getElementById('btnRecordsHistory').classList.contains('active')
+    ? 'ranking'
+    : 'history';
+  await openRecordsCenter(nextTab);
+  document.getElementById(nextTab === 'ranking' ? 'btnRecordsRanking' : 'btnRecordsHistory').focus();
+});
+
+async function loadHistory() {
   const listEl = document.getElementById('historyList');
   listEl.innerHTML = '<div class="history-empty">正在載入個人歷史戰績...</div>';
-  showScreen('history');
   try {
     const records = await api('GET', '/api/game-records/me');
     if (records.length === 0) {
@@ -123,7 +261,7 @@ async function openHistory() {
           <div class="history-main">
             <time class="history-date">${escapeHtml(formatRecordDate(record.createdAt))}</time>
             <strong>${escapeHtml(record.stageName)}</strong>
-            <span>任務 ${String(record.stageId).padStart(2, '0')}</span>
+            <span>任務 ${String(missionNumberForStage(record.stageId)).padStart(2, '0')}</span>
           </div>
           <span class="history-result ${won ? 'win' : 'lose'}">${won ? '勝利' : '失敗'}</span>
           <div class="history-metrics">
@@ -138,14 +276,28 @@ async function openHistory() {
   }
 }
 
-async function openRanking() {
+async function loadRanking() {
+  const stageFilter = document.getElementById('rankingStageFilter');
+  const previousValue = stageFilter.value;
+  stageFilter.innerHTML = [
+    '<option value="">全部關卡</option>',
+    ...state.stages.map(stage =>
+      `<option value="${stage.stageId}">任務 ${String(missionNumberForStage(stage.stageId)).padStart(2, '0')}｜${escapeHtml(stage.stageName)}</option>`
+    ),
+  ].join('');
+  if ([...stageFilter.options].some(option => option.value === previousValue)) {
+    stageFilter.value = previousValue;
+  }
+  const selectedStageId = Number(stageFilter.value) || null;
   const listEl = document.getElementById('rankList');
   const podiumEl = document.getElementById('rankPodium');
   podiumEl.innerHTML = '';
   listEl.innerHTML = '<div class="ranking-empty">正在載入排行榜...</div>';
-  showScreen('ranking');
   try {
-    const ranking = await api('GET', '/api/rankings');
+    const rankingPath = selectedStageId
+      ? `/api/rankings?stageId=${selectedStageId}`
+      : '/api/rankings';
+    const ranking = await api('GET', rankingPath);
     const ranked = ranking.entries;
 
     if (ranked.length === 0) {
@@ -207,6 +359,8 @@ async function openRanking() {
     listEl.innerHTML = `<div class="ranking-empty">載入排行榜失敗：${escapeHtml(e.message)}</div>`;
   }
 }
+
+document.getElementById('rankingStageFilter').addEventListener('change', loadRanking);
 
 // ---------- Stage select ----------
 function renderStageList() {
@@ -285,7 +439,7 @@ async function applyRouteFromLocation() {
   const authenticated = Boolean(state.accessToken && state.playerId);
 
   if (!requestedScreen) {
-    showScreen(authenticated ? 'stages' : 'start', { replaceRoute: true });
+    showScreen(authenticated ? 'lobby' : 'start', { replaceRoute: true });
     return;
   }
 
@@ -299,22 +453,19 @@ async function applyRouteFromLocation() {
   }
 
   if (requestedScreen === 'start' || requestedScreen === 'register') {
-    showScreen('stages', { replaceRoute: true });
+    showScreen('lobby', { replaceRoute: true });
     return;
   }
 
   if (requestedScreen === 'game' && !game) {
-    showScreen('stages', { replaceRoute: true });
+    showScreen('lobby', { replaceRoute: true });
     return;
   }
 
-  if (requestedScreen === 'ranking') {
-    if (currentScreenName !== 'ranking') await openRanking();
-    return;
-  }
-
-  if (requestedScreen === 'history') {
-    if (currentScreenName !== 'history') await openHistory();
+  if (requestedScreen === 'records') {
+    const legacyRoute = window.location.hash === '#/history'
+      || window.location.hash === '#/ranking';
+    await openRecordsCenter(recordTabFromHash(), { replaceRoute: legacyRoute });
     return;
   }
 
@@ -327,6 +478,9 @@ window.addEventListener('hashchange', applyRouteFromLocation);
 // Restore the same player after refreshing or reopening the game.
 (async function restoreSession() {
   const requestedScreen = screenNameFromHash();
+  const requestedRecordsTab = recordTabFromHash();
+  const legacyRecordsRoute = window.location.hash === '#/history'
+    || window.location.hash === '#/ranking';
   if (!state.accessToken) {
     await applyRouteFromLocation();
     return;
@@ -336,14 +490,17 @@ window.addEventListener('hashchange', applyRouteFromLocation);
   try {
     await enterGame(await api('GET', '/api/auth/me'), { updateRoute: false });
     errEl.textContent = '';
-    if (requestedScreen === 'ranking') {
-      await openRanking();
-    } else if (requestedScreen === 'history') {
-      await openHistory();
+    if (requestedScreen === 'records') {
+      await openRecordsCenter(requestedRecordsTab, { replaceRoute: legacyRecordsRoute });
+    } else if (requestedScreen === 'stages') {
+      showScreen('stages', { updateRoute: false });
+    } else if (requestedScreen === 'workshop') {
+      renderTowerWorkshop();
+      showScreen('workshop', { updateRoute: false });
     } else {
-      showScreen('stages', {
+      showScreen('lobby', {
         updateRoute: true,
-        replaceRoute: requestedScreen !== 'stages',
+        replaceRoute: requestedScreen !== 'lobby',
       });
     }
   } catch (error) {

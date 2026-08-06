@@ -25,6 +25,7 @@ public class TowerMapper {
                 .attackSpeed(tower.getAttackSpeed())
                 .attackRange(tower.getAttackRange())
                 .cost(tower.getCost())
+                .unlockCost(tower.getUnlockCost())
                 .build();
     }
 

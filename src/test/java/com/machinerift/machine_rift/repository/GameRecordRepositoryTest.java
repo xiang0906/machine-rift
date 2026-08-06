@@ -34,7 +34,6 @@ class GameRecordRepositoryTest {
                 .experience(0)
                 .gold(0)
                 .completedStages(0)
-                .unlockedTowerCount(1)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build());

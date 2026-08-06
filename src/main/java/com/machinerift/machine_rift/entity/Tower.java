@@ -44,4 +44,7 @@ public class Tower {
 
     @Column(name = "cost", nullable = false)
     private Integer cost;
+
+    @Column(name = "unlock_cost", nullable = false)
+    private Integer unlockCost;
 }

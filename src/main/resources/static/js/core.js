@@ -2,18 +2,20 @@
 const screens = {
   start: document.getElementById('screen-start'),
   register: document.getElementById('screen-register'),
+  lobby: document.getElementById('screen-lobby'),
+  workshop: document.getElementById('screen-workshop'),
   stages: document.getElementById('screen-stages'),
-  history: document.getElementById('screen-history'),
-  ranking: document.getElementById('screen-ranking'),
+  records: document.getElementById('screen-records'),
   game: document.getElementById('screen-game'),
 };
 
 const SCREEN_ROUTES = {
   start: '/login',
   register: '/register',
+  lobby: '/lobby',
+  workshop: '/towers',
   stages: '/stages',
-  history: '/history',
-  ranking: '/ranking',
+  records: '/records',
   game: '/game',
 };
 const ROUTE_SCREENS = Object.fromEntries(
@@ -23,7 +25,12 @@ let currentScreenName = 'start';
 
 function screenNameFromHash() {
   const route = window.location.hash.replace(/^#/, '') || '/login';
+  if (route === '/history' || route === '/ranking') return 'records';
   return ROUTE_SCREENS[route] || null;
+}
+
+function recordTabFromHash() {
+  return window.location.hash === '#/ranking' ? 'ranking' : 'history';
 }
 
 function syncRouteForScreen(name, replaceRoute = false) {
@@ -35,6 +42,7 @@ function syncRouteForScreen(name, replaceRoute = false) {
 
 function showScreen(name, { updateRoute = true, replaceRoute = false } = {}) {
   if (!screens[name]) return;
+  if (name !== currentScreenName) closeConfirmDialog(false);
   if (currentScreenName === 'game' && name !== 'game'
       && typeof stopCurrentGame === 'function') {
     stopCurrentGame();
@@ -46,6 +54,54 @@ function showScreen(name, { updateRoute = true, replaceRoute = false } = {}) {
   if (updateRoute) syncRouteForScreen(name, replaceRoute);
   if (name === 'game') requestAnimationFrame(() => window.scrollTo(0, 0));
 }
+
+let confirmDialogResolver = null;
+
+function closeConfirmDialog(accepted) {
+  const overlay = document.getElementById('overlay-confirm');
+  overlay.hidden = true;
+  if (!confirmDialogResolver) return;
+  const resolve = confirmDialogResolver;
+  confirmDialogResolver = null;
+  resolve(accepted);
+}
+
+function confirmAction({
+  badge = '系統確認',
+  title = '確認操作',
+  message,
+  confirmLabel = '確認',
+  cancelLabel = '取消',
+  tone = 'normal',
+}) {
+  closeConfirmDialog(false);
+  const overlay = document.getElementById('overlay-confirm');
+  document.getElementById('confirmBadge').textContent = badge;
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMessage').textContent = message;
+  document.getElementById('confirmIcon').textContent = tone === 'danger' ? '!' : '◇';
+  const acceptButton = document.getElementById('btnConfirmAccept');
+  acceptButton.textContent = confirmLabel;
+  acceptButton.className = tone === 'danger' ? 'btn-danger' : 'btn-primary';
+  document.getElementById('btnConfirmCancel').textContent = cancelLabel;
+  overlay.dataset.tone = tone;
+  overlay.hidden = false;
+  requestAnimationFrame(() => acceptButton.focus());
+  return new Promise(resolve => {
+    confirmDialogResolver = resolve;
+  });
+}
+
+document.getElementById('btnConfirmAccept').addEventListener('click', () => closeConfirmDialog(true));
+document.getElementById('btnConfirmCancel').addEventListener('click', () => closeConfirmDialog(false));
+document.getElementById('overlay-confirm').addEventListener('click', event => {
+  if (event.target === event.currentTarget) closeConfirmDialog(false);
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && !document.getElementById('overlay-confirm').hidden) {
+    closeConfirmDialog(false);
+  }
+});
 
 async function api(method, path, body) {
   const headers = {};
@@ -72,7 +128,9 @@ const state = {
   playerId: null,
   playerName: '',
   stages: [],
+  allTowers: [],
   towers: [],
+  totalTowerCount: 0,
   players: [],
   progress: null,
   selectedStage: null,
@@ -106,7 +164,9 @@ async function enterGame(authData, { updateRoute = true } = {}) {
   document.getElementById('currentPlayerName').textContent = player.playerName;
   await loadPlayerContent();
   renderStageList();
-  showScreen('stages', { updateRoute });
+  renderLobby();
+  renderTowerWorkshop();
+  showScreen('lobby', { updateRoute });
 }
 
 async function loadPlayerContent() {
@@ -121,10 +181,14 @@ async function loadPlayerContent() {
   );
 
   state.progress = progress;
+  state.totalTowerCount = towers.length;
+  state.allTowers = [...towers].sort((left, right) =>
+    left.unlockCost - right.unlockCost || left.towerId - right.towerId
+  );
   state.stages = stages
     .sort((left, right) => left.stageId - right.stageId)
     .map(stage => ({ ...stage, progress: stageProgressById.get(stage.stageId) }));
-  state.towers = towers.filter(tower => unlockedTowerIds.has(tower.towerId));
+  state.towers = state.allTowers.filter(tower => unlockedTowerIds.has(tower.towerId));
 }
 
 function missionNumberForStage(stageId) {

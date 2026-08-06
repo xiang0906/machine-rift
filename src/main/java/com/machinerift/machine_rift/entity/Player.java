@@ -50,9 +50,6 @@ public class Player {
     @Column(name = "completed_stages", nullable = false)
     private Integer completedStages;
 
-    @Column(name = "unlocked_tower_count", nullable = false)
-    private Integer unlockedTowerCount;
-
     @Column(name = "session_token_hash", unique = true, length = 64)
     private String sessionTokenHash;
 

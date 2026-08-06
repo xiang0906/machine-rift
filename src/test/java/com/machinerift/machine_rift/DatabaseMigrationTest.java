@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -43,6 +45,7 @@ class DatabaseMigrationTest {
 
         Flyway.configure()
                 .dataSource(dataSource)
+                .target(MigrationVersion.fromVersion("15"))
                 .load()
                 .migrate();
 
@@ -54,6 +57,82 @@ class DatabaseMigrationTest {
                 FROM INFORMATION_SCHEMA.INDEXES
                 WHERE TABLE_SCHEMA = 'PUBLIC'
                   AND INDEX_NAME = 'IDX_GAME_RECORD_PLAYER_CREATED_AT'
+                """, Integer.class));
+    }
+
+    @Test
+    void v16RestoresExactTowerUnlockRowsAndRemovesAggregateCount() {
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setDriverClassName("org.h2.Driver");
+        dataSource.setUrl(
+                "jdbc:h2:mem:migration-v16;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
+        dataSource.setUsername("root");
+        dataSource.setPassword("");
+
+        Flyway.configure()
+                .dataSource(dataSource)
+                .target(MigrationVersion.fromVersion("15"))
+                .load()
+                .migrate();
+
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        jdbc.update("""
+                INSERT INTO player (
+                  player_id, player_name, level, created_at, username, password_hash,
+                  experience, gold, completed_stages, unlocked_tower_count, updated_at
+                ) VALUES (
+                  997, 'Tower Player', 2, CURRENT_TIMESTAMP,
+                  'tower_player', 'tower-password-hash', 1200, 300, 1, 3, CURRENT_TIMESTAMP
+                )
+                """);
+
+        Flyway.configure()
+                .dataSource(dataSource)
+                .target(MigrationVersion.fromVersion("16"))
+                .load()
+                .migrate();
+
+        assertEquals(List.of("脈衝砲塔", "離子機槍塔", "量子砲塔"), jdbc.queryForList("""
+                SELECT t.tower_name
+                FROM player_tower_unlock ptu
+                JOIN tower t ON t.tower_id = ptu.tower_id
+                WHERE ptu.player_id = 997
+                ORDER BY t.cost, t.tower_id
+                """, String.class));
+        assertEquals(0, jdbc.queryForObject("""
+                SELECT COUNT(*)
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = 'PUBLIC'
+                  AND TABLE_NAME = 'PLAYER'
+                  AND COLUMN_NAME = 'UNLOCKED_TOWER_COUNT'
+                """, Integer.class));
+    }
+
+    @Test
+    void v17AddsPermanentUnlockCostsToEveryTower() {
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setDriverClassName("org.h2.Driver");
+        dataSource.setUrl(
+                "jdbc:h2:mem:migration-v17;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
+        dataSource.setUsername("root");
+        dataSource.setPassword("");
+
+        Flyway.configure()
+                .dataSource(dataSource)
+                .target(MigrationVersion.fromVersion("16"))
+                .load()
+                .migrate();
+
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        Flyway.configure()
+                .dataSource(dataSource)
+                .load()
+                .migrate();
+
+        assertEquals(List.of(0, 250, 450, 650, 900, 1200), jdbc.queryForList("""
+                SELECT unlock_cost
+                FROM tower
+                ORDER BY cost, tower_id
                 """, Integer.class));
     }
 
@@ -105,6 +184,7 @@ class DatabaseMigrationTest {
 
         Flyway.configure()
                 .dataSource(dataSource)
+                .target(MigrationVersion.fromVersion("14"))
                 .load()
                 .migrate();
 

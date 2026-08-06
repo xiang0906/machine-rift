@@ -142,7 +142,7 @@ class GameRecordServiceTest {
         when(gameRecordRepository.findAllByOrderByScoreDescPlayTimeAscRecordIdAsc())
                 .thenReturn(orderedRecords);
 
-        RankingResponseDto ranking = gameRecordService.getRankings();
+        RankingResponseDto ranking = gameRecordService.getRankings(null);
 
         assertEquals(12, ranking.getParticipantCount());
         assertEquals(13, ranking.getTotalGameCount());
@@ -155,6 +155,40 @@ class GameRecordServiceTest {
         assertEquals(List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
                 ranking.getEntries().stream().map(entry -> entry.getRank()).toList());
         assertEquals("Stage 2", ranking.getEntries().getFirst().getStageName());
+    }
+
+    @Test
+    void shouldReturnEachPlayersBestRecordForSelectedStage() {
+        Stage selectedStage = stage(2L);
+        List<GameRecord> orderedRecords = List.of(
+                record(1L, player(1L), selectedStage, 900, 80),
+                record(2L, player(2L), selectedStage, 900, 90),
+                record(3L, player(1L), selectedStage, 700, 40));
+        when(stageRepository.findById(2L)).thenReturn(Optional.of(selectedStage));
+        when(gameRecordRepository.findAllByStageOrderByScoreDescPlayTimeAscRecordIdAsc(selectedStage))
+                .thenReturn(orderedRecords);
+
+        RankingResponseDto ranking = gameRecordService.getRankings(2L);
+
+        assertEquals(2, ranking.getParticipantCount());
+        assertEquals(3, ranking.getTotalGameCount());
+        assertEquals(List.of("Player 1", "Player 2"),
+                ranking.getEntries().stream().map(entry -> entry.getPlayerName()).toList());
+        assertEquals(List.of(1, 2),
+                ranking.getEntries().stream().map(entry -> entry.getRank()).toList());
+        verify(gameRecordRepository)
+                .findAllByStageOrderByScoreDescPlayTimeAscRecordIdAsc(selectedStage);
+    }
+
+    @Test
+    void shouldRejectRankingFilterForMissingStage() {
+        when(stageRepository.findById(99L)).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> gameRecordService.getRankings(99L));
+
+        assertEquals("找不到指定的關卡，ID：99", exception.getMessage());
     }
 
     private Player player(Long id) {

@@ -5,21 +5,20 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 /**
- * Response payload returned to clients for tower resources.
+ * Result returned after permanently unlocking a tower.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TowerResponseDto {
+public class TowerUnlockResponseDto {
 
     private Long towerId;
     private String towerName;
-    private String towerType;
-    private Integer damage;
-    private Double attackSpeed;
-    private Integer attackRange;
-    private Integer cost;
     private Integer unlockCost;
+    private Integer remainingGold;
+    private LocalDateTime unlockedAt;
 }

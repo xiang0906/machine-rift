@@ -5,9 +5,12 @@ import com.machinerift.machine_rift.dto.PlayerStageProgressResponseDto;
 import com.machinerift.machine_rift.dto.UnlockedTowerResponseDto;
 import com.machinerift.machine_rift.entity.Player;
 import com.machinerift.machine_rift.entity.PlayerStageProgress;
+import com.machinerift.machine_rift.entity.PlayerTowerUnlock;
 import com.machinerift.machine_rift.entity.Stage;
+import com.machinerift.machine_rift.entity.Tower;
 import com.machinerift.machine_rift.repository.PlayerRepository;
 import com.machinerift.machine_rift.repository.PlayerStageProgressRepository;
+import com.machinerift.machine_rift.repository.PlayerTowerUnlockRepository;
 import com.machinerift.machine_rift.repository.StageRepository;
 import com.machinerift.machine_rift.repository.TowerRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +33,7 @@ public class PlayerProgressService {
 
     private final PlayerRepository playerRepository;
     private final PlayerStageProgressRepository playerStageProgressRepository;
+    private final PlayerTowerUnlockRepository playerTowerUnlockRepository;
     private final StageRepository stageRepository;
     private final TowerRepository towerRepository;
 
@@ -62,17 +66,12 @@ public class PlayerProgressService {
             }
         });
 
-        int towerCount = towerRepository.findAllByOrderByCostAscTowerIdAsc().size();
-        int currentUnlockedCount = player.getUnlockedTowerCount() == null
-                ? 0
-                : player.getUnlockedTowerCount();
-        int normalizedUnlockedCount = towerCount == 0
-                ? 0
-                : Math.max(1, Math.min(currentUnlockedCount, towerCount));
-        if (currentUnlockedCount != normalizedUnlockedCount) {
-            player.setUnlockedTowerCount(normalizedUnlockedCount);
-            playerChanged = true;
-        }
+        towerRepository.findAllByOrderByCostAscTowerIdAsc().stream().findFirst().ifPresent(tower -> {
+            if (!playerTowerUnlockRepository
+                    .existsByPlayerPlayerIdAndTowerTowerId(player.getPlayerId(), tower.getTowerId())) {
+                unlockTower(player, tower, now);
+            }
+        });
         if (player.getUpdatedAt() == null) {
             playerChanged = true;
         }
@@ -113,13 +112,11 @@ public class PlayerProgressService {
                 })
                 .toList();
 
-        var sortedTowers = towerRepository.findAllByOrderByCostAscTowerIdAsc();
-        int unlockedTowerCount = Math.min(player.getUnlockedTowerCount(), sortedTowers.size());
-        var towers = sortedTowers.stream()
-                .limit(unlockedTowerCount)
-                .map(tower -> UnlockedTowerResponseDto.builder()
-                        .towerId(tower.getTowerId())
-                        .towerName(tower.getTowerName())
+        var towers = playerTowerUnlockRepository
+                .findAllByPlayerPlayerIdOrderByTowerCostAscTowerTowerIdAsc(playerId).stream()
+                .map(unlock -> UnlockedTowerResponseDto.builder()
+                        .towerId(unlock.getTower().getTowerId())
+                        .towerName(unlock.getTower().getTowerName())
                         .build())
                 .toList();
 
@@ -176,7 +173,6 @@ public class PlayerProgressService {
                 player.setCompletedStages(player.getCompletedStages() + 1);
             }
             unlockNextStage(player, stage, now);
-            unlockNextTower(player, now);
         }
 
         player.setLevel(1 + player.getExperience() / EXPERIENCE_PER_LEVEL);
@@ -211,14 +207,6 @@ public class PlayerProgressService {
                 .findFirst();
     }
 
-    private void unlockNextTower(Player player, LocalDateTime now) {
-        int towerCount = towerRepository.findAllByOrderByCostAscTowerIdAsc().size();
-        if (player.getUnlockedTowerCount() < towerCount) {
-            player.setUnlockedTowerCount(player.getUnlockedTowerCount() + 1);
-            player.setUpdatedAt(now);
-        }
-    }
-
     private void unlockStage(Player player, Stage stage, LocalDateTime now) {
         PlayerStageProgress stageProgress = playerStageProgressRepository
                 .findByPlayerPlayerIdAndStageStageId(player.getPlayerId(), stage.getStageId())
@@ -230,6 +218,14 @@ public class PlayerProgressService {
         stageProgress.setUnlocked(true);
         stageProgress.setUpdatedAt(now);
         playerStageProgressRepository.save(stageProgress);
+    }
+
+    private void unlockTower(Player player, Tower tower, LocalDateTime now) {
+        playerTowerUnlockRepository.save(PlayerTowerUnlock.builder()
+                .player(player)
+                .tower(tower)
+                .unlockedAt(now)
+                .build());
     }
 
 }

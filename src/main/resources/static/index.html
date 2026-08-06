@@ -44,6 +44,62 @@
   <div class="error-text" id="registerError"></div>
 </div>
 
+<div id="screen-lobby" class="card" hidden>
+  <header class="lobby-hero">
+    <div>
+      <span class="badge">裂隙防衛總部</span>
+      <h1>作戰大廳</h1>
+      <p>歡迎回來，指揮官 <strong id="lobbyPlayerName"></strong>。選擇本次要執行的行動。</p>
+    </div>
+    <button class="btn-secondary lobby-logout" id="btnLogout">登出</button>
+  </header>
+  <section class="lobby-status" aria-label="玩家進度摘要">
+    <div><span>指揮官等級</span><b id="lobbyLevel">1</b></div>
+    <div><span>永久戰備金</span><b><span id="lobbyGold">0</span> G</b></div>
+    <div><span>完成關卡</span><b id="lobbyStages">0 / 6</b></div>
+    <div><span>解鎖防禦塔</span><b id="lobbyTowers">0 / 6</b></div>
+  </section>
+  <section class="lobby-actions" aria-label="大廳功能">
+    <button class="lobby-action lobby-action-primary" id="btnLobbyStages">
+      <span class="lobby-action-code">MISSION</span>
+      <strong>開始任務</strong>
+      <small>選擇已解鎖防區，進入塔防戰場</small>
+      <i>前往選擇關卡 →</i>
+    </button>
+    <button class="lobby-action" id="btnLobbyWorkshop">
+      <span class="lobby-action-code">ARSENAL</span>
+      <strong>防禦塔工坊</strong>
+      <small>使用永久戰備金，自由解鎖新的防禦塔</small>
+      <i>進入塔庫整備 →</i>
+    </button>
+    <button class="lobby-action lobby-action-records" id="btnLobbyRecords">
+      <span class="lobby-action-code">RECORD CENTER</span>
+      <strong>戰績中心</strong>
+      <small>查看個人最近 20 場任務紀錄，並與排行榜前 10 名比較</small>
+      <i>開啟戰績中心 →</i>
+    </button>
+  </section>
+</div>
+
+<div id="screen-workshop" class="card" hidden>
+  <header class="workshop-hero">
+    <div>
+      <span class="badge">防衛軍械庫</span>
+      <h1>防禦塔工坊</h1>
+      <p>解鎖為帳號永久持有；進入戰場後仍需使用該局金幣建造。</p>
+    </div>
+    <div class="workshop-balance">
+      <span>永久戰備金</span>
+      <b><span id="workshopGold">0</span> G</b>
+    </div>
+  </header>
+  <div class="workshop-notice" id="workshopNotice" role="status" aria-live="polite"></div>
+  <div class="workshop-grid" id="workshopTowerList"></div>
+  <div class="btn-row">
+    <button class="btn-secondary" id="btnBackFromWorkshop">返回遊戲大廳</button>
+  </div>
+</div>
+
 <div id="screen-stages" class="card" hidden>
   <h2>選擇關卡 · <span id="currentPlayerName"></span></h2>
   <p class="screen-intro">選擇下一個防區，閱讀任務簡報後進入戰場。</p>
@@ -58,51 +114,54 @@
     </ol>
   </details>
   <div class="btn-row">
-    <button class="btn-primary" id="btnShowRanking">查看排行榜</button>
-    <button class="btn-secondary" id="btnShowHistory">個人歷史戰績</button>
-    <button class="btn-secondary" id="btnBackToStart">登出</button>
+    <button class="btn-secondary" id="btnBackToLobby">返回遊戲大廳</button>
   </div>
 </div>
 
-<div id="screen-history" class="card" hidden>
-  <div class="history-hero">
+<div id="screen-records" class="card" hidden>
+  <div class="records-hero">
     <div>
-      <span class="badge">個人作戰檔案</span>
-      <h1>歷史戰績</h1>
-      <p>依遊玩日期由新到舊排列，保留最近 20 場任務紀錄。</p>
+      <span class="badge">裂隙作戰資料庫</span>
+      <h1>戰績中心</h1>
+      <p>集中查看個人任務紀錄，以及全服指揮官的最佳排名。</p>
     </div>
-    <div class="history-emblem" aria-hidden="true">
-      <span>MISSION LOG</span>
-      <b>REC</b>
-    </div>
-  </div>
-  <div class="history-list" id="historyList"></div>
-  <div class="btn-row">
-    <button class="btn-secondary" id="btnBackFromHistory">返回關卡</button>
-  </div>
-</div>
-
-<div id="screen-ranking" class="card" hidden>
-  <div class="ranking-hero">
-    <div>
-      <span class="badge">裂隙榮耀榜</span>
-      <h1>排行榜</h1>
-      <p class="ranking-intro">每位玩家取最高分，同分時以較短遊玩時間優先。</p>
-    </div>
-    <div class="ranking-emblem" aria-hidden="true">
-      <span>MACHINE RIFT</span>
-      <b>TOP 10</b>
+    <div class="records-hero-actions">
+      <div class="records-emblem" aria-hidden="true">
+        <span>BATTLE DATA</span>
+        <b>REC / TOP</b>
+      </div>
+      <button class="btn-secondary records-back" id="btnBackFromRecords">← 返回遊戲大廳</button>
     </div>
   </div>
-  <div class="rank-podium" id="rankPodium"></div>
-  <div class="rank-section-title">
-    <span>完整排名</span>
-    <span>前 10 名</span>
+  <div class="records-tabs" role="tablist" aria-label="戰績檢視模式">
+    <button class="records-tab active" id="btnRecordsHistory" role="tab"
+      aria-selected="true" aria-controls="recordsHistoryPanel">個人歷史</button>
+    <button class="records-tab" id="btnRecordsRanking" role="tab"
+      aria-selected="false" aria-controls="recordsRankingPanel">榮耀排行榜</button>
   </div>
-  <div class="rank-list" id="rankList"></div>
-  <div class="btn-row">
-    <button class="btn-secondary" id="btnBackFromRanking">返回</button>
-  </div>
+  <section class="records-panel" id="recordsHistoryPanel" role="tabpanel"
+    aria-labelledby="btnRecordsHistory">
+    <div class="records-section-heading">
+      <div><strong>個人作戰檔案</strong><span>最近 20 場，依日期由新到舊</span></div>
+    </div>
+    <div class="history-list" id="historyList"></div>
+  </section>
+  <section class="records-panel" id="recordsRankingPanel" role="tabpanel"
+    aria-labelledby="btnRecordsRanking" hidden>
+    <div class="records-section-heading">
+      <div><strong>裂隙榮耀榜</strong><span>每位玩家取最高分，同分時完成時間較短者優先</span></div>
+      <label class="ranking-stage-filter" for="rankingStageFilter">
+        <span>排行榜關卡</span>
+        <select id="rankingStageFilter" aria-label="選擇排行榜關卡"></select>
+      </label>
+    </div>
+    <div class="rank-podium" id="rankPodium"></div>
+    <div class="rank-section-title">
+      <span>完整排名</span>
+      <span>前 10 名</span>
+    </div>
+    <div class="rank-list" id="rankList"></div>
+  </section>
 </div>
 
 <div id="screen-game" class="card" hidden>
@@ -166,7 +225,22 @@
     <p class="result-message" id="resultMessage"></p>
     <p id="resultDetail"></p>
     <div class="btn-row" style="justify-content:center">
-      <button class="btn-primary" id="btnPlayAgain">返回關卡選擇</button>
+      <button class="btn-primary" id="btnPlayAgain">繼續選擇關卡</button>
+      <button class="btn-secondary" id="btnResultLobby">返回遊戲大廳</button>
+    </div>
+  </div>
+</div>
+
+<div id="overlay-confirm" class="overlay confirm-overlay" hidden
+  role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+  <div class="card confirm-card">
+    <span class="badge" id="confirmBadge">系統確認</span>
+    <div class="confirm-icon" id="confirmIcon" aria-hidden="true">!</div>
+    <h2 id="confirmTitle">確認操作</h2>
+    <p id="confirmMessage"></p>
+    <div class="btn-row confirm-actions">
+      <button class="btn-primary" id="btnConfirmAccept">確認</button>
+      <button class="btn-secondary" id="btnConfirmCancel">取消</button>
     </div>
   </div>
 </div>

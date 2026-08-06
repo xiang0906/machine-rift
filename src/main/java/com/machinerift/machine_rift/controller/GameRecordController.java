@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -68,8 +69,11 @@ public class GameRecordController {
      */
     @GetMapping("/rankings")
     public ResponseEntity<ApiResponse<RankingResponseDto>> getRankings(
-            @RequestHeader(value = "Authorization", required = false) String authorization) {
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @RequestParam(required = false) Long stageId) {
         authService.requirePlayer(authorization);
-        return ResponseEntity.ok(ApiResponse.success("已取得排行榜", gameRecordService.getRankings()));
+        return ResponseEntity.ok(ApiResponse.success(
+                "已取得排行榜",
+                gameRecordService.getRankings(stageId)));
     }
 }

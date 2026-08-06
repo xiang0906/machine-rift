@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -131,7 +132,7 @@ class GameRecordControllerTest {
                 .playTime(50)
                 .result("WIN")
                 .build();
-        when(gameRecordService.getRankings()).thenReturn(RankingResponseDto.builder()
+        when(gameRecordService.getRankings(null)).thenReturn(RankingResponseDto.builder()
                 .participantCount(3)
                 .totalGameCount(8)
                 .entries(List.of(entry))
@@ -152,8 +153,26 @@ class GameRecordControllerTest {
     }
 
     @Test
+    void shouldForwardStageFilterToRankingService() throws Exception {
+        when(gameRecordService.getRankings(3L)).thenReturn(RankingResponseDto.builder()
+                .participantCount(0)
+                .totalGameCount(0)
+                .entries(List.of())
+                .build());
+
+        mockMvc.perform(get("/api/rankings")
+                        .param("stageId", "3")
+                        .header("Authorization", "Bearer test-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("已取得排行榜"))
+                .andExpect(jsonPath("$.data.entries").isEmpty());
+
+        verify(gameRecordService).getRankings(3L);
+    }
+
+    @Test
     void shouldNotExposeUnexpectedRankingExceptionDetails() throws Exception {
-        when(gameRecordService.getRankings())
+        when(gameRecordService.getRankings(null))
                 .thenThrow(new RuntimeException("Database connection secret"));
 
         mockMvc.perform(get("/api/rankings")

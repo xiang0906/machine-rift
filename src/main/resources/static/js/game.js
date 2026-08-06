@@ -109,15 +109,22 @@ function startGame() {
   rafId = requestAnimationFrame(loop);
 }
 
-document.getElementById('btnQuitGame').addEventListener('click', () => {
-  const confirmationStartedAt = performance.now();
-  const shouldQuit = window.confirm('確定放棄本局？\n本局分數與進度不會保存。');
-  if (!shouldQuit) {
-    if (game?.startedAt) {
-      game.startedAt += performance.now() - confirmationStartedAt;
-    }
-    return;
-  }
+document.getElementById('btnQuitGame').addEventListener('click', async () => {
+  if (!game || game.confirmPausedAt) return;
+  game.confirmPausedAt = performance.now();
+  const shouldQuit = await confirmAction({
+    badge: '戰場指令',
+    title: '確定放棄本局？',
+    message: '離開後，本局分數、遊戲進度與戰場金幣都不會保存。',
+    confirmLabel: '放棄並離開',
+    cancelLabel: '繼續戰鬥',
+    tone: 'danger',
+  });
+  if (!game) return;
+  if (game.startedAt) game.startedAt += performance.now() - game.confirmPausedAt;
+  game.confirmPausedAt = null;
+  game.lastTs = performance.now();
+  if (!shouldQuit) return;
   stopCurrentGame();
   showScreen('stages', { replaceRoute: true });
 });
@@ -558,6 +565,12 @@ function enemyRadius(name) {
 function loop(ts) {
   if (!game) return;
   if (game.lastTs == null) game.lastTs = ts;
+  if (game.confirmPausedAt) {
+    game.lastTs = ts;
+    draw();
+    rafId = requestAnimationFrame(loop);
+    return;
+  }
   const dt = Math.min(50, ts - game.lastTs);
   game.lastTs = ts;
 
@@ -976,7 +989,7 @@ function drawTowerPlacementPreview() {
 function updateHud() {
   const displayedWave = game.waveActive || game.spawned > 0 ? game.waveIndex + 1 : 0;
   const elapsedSeconds = game.startedAt
-    ? Math.floor((performance.now() - game.startedAt) / 1000)
+    ? Math.floor(((game.confirmPausedAt || performance.now()) - game.startedAt) / 1000)
     : 0;
   const elapsedMinutes = Math.floor(elapsedSeconds / 60);
   const remainingSeconds = elapsedSeconds % 60;
@@ -1025,4 +1038,10 @@ async function endGame(result) {
 document.getElementById('btnPlayAgain').addEventListener('click', () => {
   stopCurrentGame();
   showScreen('stages', { replaceRoute: true });
+});
+
+document.getElementById('btnResultLobby').addEventListener('click', () => {
+  stopCurrentGame();
+  renderLobby();
+  showScreen('lobby', { replaceRoute: true });
 });

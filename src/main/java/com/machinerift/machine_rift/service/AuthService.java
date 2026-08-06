@@ -58,7 +58,6 @@ public class AuthService {
                     .experience(0)
                     .gold(0)
                     .completedStages(0)
-                    .unlockedTowerCount(0)
                     .createdAt(now)
                     .updatedAt(now)
                     .build());

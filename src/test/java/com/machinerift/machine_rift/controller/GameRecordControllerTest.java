@@ -1,5 +1,6 @@
 package com.machinerift.machine_rift.controller;
 
+import com.machinerift.machine_rift.dto.GameRecordHistoryResponseDto;
 import com.machinerift.machine_rift.dto.GameRecordResponseDto;
 import com.machinerift.machine_rift.dto.RankingEntryResponseDto;
 import com.machinerift.machine_rift.dto.RankingResponseDto;
@@ -13,6 +14,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.time.LocalDateTime;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.same;
@@ -88,6 +90,35 @@ class GameRecordControllerTest {
                 .andExpect(jsonPath("$.data.score").value("分數不可小於 0"))
                 .andExpect(jsonPath("$.data.result").value("遊戲結果只能是 WIN 或 LOSE"))
                 .andExpect(jsonPath("$.data.playTime").value("遊戲時間不可小於 0"));
+    }
+
+    @Test
+    void shouldReturnAuthenticatedPlayersGameHistory() throws Exception {
+        Player authenticatedPlayer = Player.builder()
+                .playerId(7L)
+                .playerName("Alice")
+                .build();
+        LocalDateTime createdAt = LocalDateTime.of(2026, 8, 6, 14, 30);
+        when(authService.requirePlayer("Bearer test-token"))
+                .thenReturn(authenticatedPlayer);
+        when(gameRecordService.getPlayerHistory(same(authenticatedPlayer)))
+                .thenReturn(List.of(GameRecordHistoryResponseDto.builder()
+                        .recordId(11L)
+                        .stageId(2L)
+                        .stageName("核心裂谷")
+                        .score(900)
+                        .result("WIN")
+                        .playTime(80)
+                        .createdAt(createdAt)
+                        .build()));
+
+        mockMvc.perform(get("/api/game-records/me")
+                        .header("Authorization", "Bearer test-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("已取得個人歷史戰績"))
+                .andExpect(jsonPath("$.data[0].stageName").value("核心裂谷"))
+                .andExpect(jsonPath("$.data[0].score").value(900))
+                .andExpect(jsonPath("$.data[0].createdAt").value("2026-08-06T14:30:00"));
     }
 
     @Test

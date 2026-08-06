@@ -1,6 +1,7 @@
 package com.machinerift.machine_rift.mapper;
 
 import com.machinerift.machine_rift.dto.GameRecordRequestDto;
+import com.machinerift.machine_rift.dto.GameRecordHistoryResponseDto;
 import com.machinerift.machine_rift.dto.GameRecordResponseDto;
 import com.machinerift.machine_rift.entity.GameRecord;
 import com.machinerift.machine_rift.entity.Player;
@@ -27,6 +28,21 @@ public class GameRecordMapper {
                 .score(gameRecord.getScore())
                 .result(gameRecord.getResult())
                 .playTime(gameRecord.getPlayTime())
+                .build();
+    }
+
+    /**
+     * Maps a game record to the authenticated player's history view.
+     */
+    public GameRecordHistoryResponseDto toHistoryResponseDto(GameRecord gameRecord) {
+        return GameRecordHistoryResponseDto.builder()
+                .recordId(gameRecord.getRecordId())
+                .stageId(gameRecord.getStage().getStageId())
+                .stageName(gameRecord.getStage().getStageName())
+                .score(gameRecord.getScore())
+                .result(gameRecord.getResult())
+                .playTime(gameRecord.getPlayTime())
+                .createdAt(gameRecord.getCreatedAt())
                 .build();
     }
 

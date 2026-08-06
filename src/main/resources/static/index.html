@@ -59,7 +59,26 @@
   </details>
   <div class="btn-row">
     <button class="btn-primary" id="btnShowRanking">查看排行榜</button>
+    <button class="btn-secondary" id="btnShowHistory">個人歷史戰績</button>
     <button class="btn-secondary" id="btnBackToStart">登出</button>
+  </div>
+</div>
+
+<div id="screen-history" class="card" hidden>
+  <div class="history-hero">
+    <div>
+      <span class="badge">個人作戰檔案</span>
+      <h1>歷史戰績</h1>
+      <p>依遊玩日期由新到舊排列，保留最近 20 場任務紀錄。</p>
+    </div>
+    <div class="history-emblem" aria-hidden="true">
+      <span>MISSION LOG</span>
+      <b>REC</b>
+    </div>
+  </div>
+  <div class="history-list" id="historyList"></div>
+  <div class="btn-row">
+    <button class="btn-secondary" id="btnBackFromHistory">返回關卡</button>
   </div>
 </div>
 

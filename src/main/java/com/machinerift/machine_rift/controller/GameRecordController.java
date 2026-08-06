@@ -2,6 +2,7 @@ package com.machinerift.machine_rift.controller;
 
 import com.machinerift.machine_rift.dto.ApiResponse;
 import com.machinerift.machine_rift.dto.GameRecordRequestDto;
+import com.machinerift.machine_rift.dto.GameRecordHistoryResponseDto;
 import com.machinerift.machine_rift.dto.GameRecordResponseDto;
 import com.machinerift.machine_rift.dto.RankingResponseDto;
 import com.machinerift.machine_rift.entity.Player;
@@ -17,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * REST controller for game record endpoints and rankings.
@@ -44,6 +47,18 @@ public class GameRecordController {
                 .body(ApiResponse.success(
                         "戰績儲存成功",
                         gameRecordService.saveGameRecord(requestDto, player)));
+    }
+
+    /**
+     * Retrieves the authenticated player's latest game records.
+     */
+    @GetMapping("/game-records/me")
+    public ResponseEntity<ApiResponse<List<GameRecordHistoryResponseDto>>> getMyGameRecords(
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        Player player = authService.requirePlayer(authorization);
+        return ResponseEntity.ok(ApiResponse.success(
+                "已取得個人歷史戰績",
+                gameRecordService.getPlayerHistory(player)));
     }
 
     /**

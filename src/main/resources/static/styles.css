@@ -218,6 +218,83 @@
     font-size: 0.82rem;
     line-height: 1.45;
   }
+  #screen-history {
+    width: min(860px, 100%);
+    overflow: hidden;
+  }
+  .history-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin: -8px -8px 20px;
+    padding: 20px 22px;
+    border: 1px solid rgba(77,208,225,0.18);
+    border-radius: 16px;
+    background:
+      radial-gradient(circle at 84% 24%, rgba(255,138,101,0.16), transparent 34%),
+      linear-gradient(120deg, rgba(77,208,225,0.12), rgba(13,27,49,0.74));
+  }
+  .history-hero .badge { margin-bottom: 10px; }
+  .history-hero h1 { font-size: 2rem; }
+  .history-hero p { margin: 5px 0 0; font-size: 0.9rem; }
+  .history-emblem {
+    display: grid;
+    place-items: center;
+    flex: 0 0 118px;
+    min-height: 78px;
+    border: 1px solid rgba(255,138,101,0.28);
+    border-radius: 14px;
+    background: rgba(5,16,31,0.62);
+    box-shadow: inset 0 0 24px rgba(255,138,101,0.08);
+    text-align: center;
+  }
+  .history-emblem span { color: var(--muted); font-size: 0.58rem; letter-spacing: 0.18em; }
+  .history-emblem b { color: var(--accent2); font-size: 1.25rem; letter-spacing: 0.12em; }
+  .history-list {
+    display: grid;
+    gap: 9px;
+    max-height: min(56vh, 540px);
+    overflow-y: auto;
+    padding-right: 5px;
+    scrollbar-color: rgba(77,208,225,0.45) transparent;
+    scrollbar-width: thin;
+  }
+  .history-row {
+    display: grid;
+    grid-template-columns: 38px minmax(180px, 1fr) auto minmax(210px, auto);
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
+    background: linear-gradient(100deg, rgba(22,35,59,0.98), rgba(12,26,45,0.94));
+  }
+  .history-sequence { color: rgba(157,176,199,0.58); font-size: 0.78rem; font-weight: 900; }
+  .history-main { display: grid; min-width: 0; gap: 3px; }
+  .history-main strong { overflow: hidden; color: var(--text); text-overflow: ellipsis; white-space: nowrap; }
+  .history-main > span { color: var(--muted); font-size: 0.7rem; }
+  .history-date { color: var(--accent); font-size: 0.72rem; }
+  .history-result {
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+  .history-result.win { background: rgba(76,175,80,0.14); color: #81c784; }
+  .history-result.lose { background: rgba(255,82,82,0.12); color: #ff8a80; }
+  .history-metrics { display: grid; grid-template-columns: repeat(2, minmax(84px, 1fr)); gap: 7px; }
+  .history-metrics span { padding: 7px 9px; border-radius: 9px; background: rgba(255,255,255,0.045); }
+  .history-metrics small { display: block; margin-bottom: 2px; color: var(--muted); font-size: 0.62rem; }
+  .history-metrics b { color: var(--text); font-size: 0.82rem; }
+  .history-empty {
+    padding: 34px 16px;
+    border: 1px dashed rgba(77,208,225,0.22);
+    border-radius: 14px;
+    background: rgba(77,208,225,0.035);
+    color: var(--muted);
+    text-align: center;
+  }
   #screen-ranking {
     width: min(900px, 100%);
     overflow: hidden;
@@ -375,6 +452,10 @@
   @media (max-width: 620px) {
     .stage-list { grid-template-columns: 1fr; }
     .operation-guide ol { grid-template-columns: 1fr; }
+    .history-hero { padding: 16px; }
+    .history-emblem { display: none; }
+    .history-row { grid-template-columns: 28px minmax(0, 1fr) auto; gap: 8px; padding: 11px 10px; }
+    .history-metrics { grid-column: 2 / -1; }
     .ranking-hero { padding: 16px; }
     .ranking-emblem { display: none; }
     .rank-podium { gap: 6px; min-height: 188px; }

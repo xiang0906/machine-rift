@@ -1,6 +1,6 @@
 # Machine Rift 專案現況
 
-> 更新日期：2026-07-30
+> 更新日期：2026-08-06
 > 階段：可遊玩的全端 MVP
 
 ## 1. 專案定位
@@ -15,7 +15,7 @@ Machine Rift 是一款以瀏覽器 Canvas 呈現的塔防遊戲。Spring Boot �
 3. 玩家選擇已解鎖關卡並進行塔防遊戲。
 4. 結束後將勝敗、分數與遊玩時間寫入後端。
 5. 後端更新經驗、等級、金幣、個人最佳與解鎖內容。
-6. 玩家可在登入後查看排行榜。
+6. 玩家可在關卡選擇頁查看個人歷史戰績，並在登入後查看排行榜。
 
 ## 2. 技術與執行環境
 
@@ -27,7 +27,7 @@ Machine Rift 是一款以瀏覽器 Canvas 呈現的塔防遊戲。Spring Boot �
 | 密碼 | Spring Security Crypto、BCrypt |
 | 正式資料庫 | MySQL |
 | 測試資料庫 | H2（MySQL mode） |
-| Migration | Flyway V1～V14 |
+| Migration | Flyway V1～V15 |
 | API 文件 | springdoc-openapi／Swagger UI |
 | 前端 | HTML、CSS、Vanilla JavaScript、Canvas 2D |
 | 建置 | Maven Wrapper |
@@ -146,11 +146,13 @@ MySQL / H2
 | `stage_wave` | 波次、敵人、數量與生成間隔 |
 | `tower` | 塔的類型、傷害、攻速、射程與造價 |
 | `enemy` | 敵人生命、速度與擊殺獎勵 |
-| `game_record` | 每場遊戲的分數、勝敗與時間 |
+| `game_record` | 每場遊戲的分數、勝敗、遊玩時間與建立日期 |
 
 V14 將 `player_progress`、`player_session`、`player_tower_unlock` 合併至 `player`。
 塔依造價順序解鎖，因此只保存解鎖數量即可還原玩家目前可使用的塔；每關解鎖與個人最佳
 仍由 `player_stage_progress` 保存。
+V15 在 `game_record` 加入 `created_at`，既有戰績會在 migration 時補上時間，後續戰績則
+在建立時自動記錄日期。
 
 ## 8. API 現況
 
@@ -161,11 +163,12 @@ V14 將 `player_progress`、`player_session`、`player_tower_unlock` 合併至 `
 | 私人進度 | `GET /api/players/me/progress` |
 | 關卡 | `GET /api/stages` |
 | 防禦塔 | `GET /api/towers` |
-| 戰績 | `POST /api/game-records` |
+| 戰績 | `POST /api/game-records`、`GET /api/game-records/me` |
 | 排行榜 | `GET /api/rankings` |
 
-目前共 9 支 API，皆為前端實際使用的核心端點。未使用的公開玩家清單、玩家維護、
-關卡／防禦塔後台 CRUD、單筆查詢與戰績查詢端點及其輔助程式已移除。
+目前共 10 支 API，皆為前端實際使用的核心端點。未使用的公開玩家清單、玩家維護、
+關卡／防禦塔後台 CRUD、單筆查詢與公開戰績查詢端點及其輔助程式已移除。個人歷史
+端點只回傳 Token 所屬玩家最近 20 場戰績，依建立日期由新到舊排列。
 排行榜由後端選出每位玩家最佳戰績，依分數降冪、時間升冪排列，最多回傳前十名，
 並直接包含排名、玩家名稱、關卡名稱、分數、時間、結果及整體統計。
 私人進度與戰績寫入的玩家身分完全由 Bearer Token 決定；進度網址與戰績 request
@@ -176,18 +179,19 @@ Controller 成功訊息、DTO 驗證訊息及 Service 業務錯誤皆統一使�
 ## 9. 前端現況
 
 - 前端已拆分為 HTML 結構、共用 CSS、核心狀態、畫面控制與 Canvas 遊戲引擎。
-- `index.html` 只保留五個畫面的 HTML 結構及靜態資源載入。
+- `index.html` 只保留六個畫面的 HTML 結構及靜態資源載入。
 - `core.js` 負責 API、Session 與玩家內容；`views.js` 負責畫面；`game.js` 負責塔防引擎；
   `story.js` 保存輕量敘事文案。
-- 五個畫面使用 `#/login`、`#/register`、`#/stages`、`#/ranking`、`#/game` hash 路由，
+- 六個畫面使用 `#/login`、`#/register`、`#/stages`、`#/history`、`#/ranking`、`#/game` hash 路由，
   網址會隨畫面更新並支援瀏覽器上一頁／下一頁。
-- 關卡、排行榜與遊戲路由需要登入；直接開啟 `#/game` 或在戰鬥中重新整理時，因本局
+- 關卡、個人歷史、排行榜與遊戲路由需要登入；直接開啟 `#/game` 或在戰鬥中重新整理時，因本局
   狀態只存在記憶體，登入恢復後會安全返回關卡選擇。
 - 首頁為登入畫面，首次遊玩的玩家可切換至建立帳號。
 - 首頁包含三行世界觀；六個關卡各有任務說明、進場簡報及勝敗結果文字。
 - 關卡選擇頁以兩欄緊湊卡片呈現，操作教學預設收合；遊戲內也會顯示精簡操作提示。
 - Access Token 保存於瀏覽器，重新開啟時透過 `/api/auth/me` 恢復登入。
 - 關卡頁顯示全部六關、鎖定狀態與個人最佳成績。
+- 關卡頁提供個人歷史戰績入口，依日期顯示最近 20 場的關卡、勝敗、分數與遊戲時間。
 - 遊戲畫面使用左側固定 Canvas 與右側可捲動塔庫。
 - 選塔後會預覽建造格、合法狀態及攻擊範圍；每次建造後需重新選塔。
 - 戰場左上顯示任務編號、關卡名稱與目前波次；HUD 顯示遊戲時間與敵人生成進度。
@@ -202,7 +206,7 @@ Controller 成功訊息、DTO 驗證訊息及 Service 業務錯誤皆統一使�
 
 ## 10. 測試與品質
 
-目前自動測試共 22 項，涵蓋：
+目前自動測試共 25 項，涵蓋：
 
 - Spring Boot 與 Flyway 啟動
 - 種子資料數量與路線唯一性
@@ -212,8 +216,10 @@ Controller 成功訊息、DTO 驗證訊息及 Service 業務錯誤皆統一使�
 - 舊玩家 ID 進度網址已停用
 - 排行榜登入權限、後端彙整與回應格式
 - 戰績寫入、關卡鎖定、每位玩家最佳戰績與前十名限制
+- 個人歷史戰績的登入身分、回應內容與最近紀錄查詢
 - API 中文成功訊息、欄位驗證與業務錯誤
 - V13 升級 V14 時的進度、塔解鎖數量與最新 Session 搬移
+- V14 升級 V15 時為既有戰績補上建立日期與查詢索引
 - 最終資料庫只保留八張業務資料表
 
 最近一次完整測試、JavaScript 語法檢查與 Maven 打包皆通過。

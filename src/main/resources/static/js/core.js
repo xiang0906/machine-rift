@@ -3,6 +3,7 @@ const screens = {
   start: document.getElementById('screen-start'),
   register: document.getElementById('screen-register'),
   stages: document.getElementById('screen-stages'),
+  history: document.getElementById('screen-history'),
   ranking: document.getElementById('screen-ranking'),
   game: document.getElementById('screen-game'),
 };
@@ -11,6 +12,7 @@ const SCREEN_ROUTES = {
   start: '/login',
   register: '/register',
   stages: '/stages',
+  history: '/history',
   ranking: '/ranking',
   game: '/game',
 };

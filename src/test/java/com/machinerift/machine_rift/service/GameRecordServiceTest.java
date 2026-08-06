@@ -20,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -100,6 +101,26 @@ class GameRecordServiceTest {
                 () -> gameRecordService.saveGameRecord(request, player));
 
         assertEquals("此關卡尚未解鎖", exception.getMessage());
+    }
+
+    @Test
+    void shouldReturnLatestRecordsForAuthenticatedPlayer() {
+        Player player = player(1L);
+        Stage stage = stage(2L);
+        LocalDateTime createdAt = LocalDateTime.of(2026, 8, 6, 14, 30);
+        GameRecord record = record(10L, player, stage, 900, 80);
+        record.setCreatedAt(createdAt);
+        when(gameRecordRepository.findTop20ByPlayerOrderByCreatedAtDescRecordIdDesc(player))
+                .thenReturn(List.of(record));
+
+        var history = gameRecordService.getPlayerHistory(player);
+
+        assertEquals(1, history.size());
+        assertEquals("Stage 2", history.getFirst().getStageName());
+        assertEquals(900, history.getFirst().getScore());
+        assertEquals(createdAt, history.getFirst().getCreatedAt());
+        verify(gameRecordRepository)
+                .findTop20ByPlayerOrderByCreatedAtDescRecordIdDesc(player);
     }
 
     @Test

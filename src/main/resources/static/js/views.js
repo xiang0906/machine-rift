@@ -56,7 +56,13 @@ document.getElementById('registerPasswordConfirmInput').addEventListener('keydow
 document.getElementById('btnShowRanking').addEventListener('click', async () => {
   await openRanking();
 });
+document.getElementById('btnShowHistory').addEventListener('click', async () => {
+  await openHistory();
+});
 document.getElementById('btnBackFromRanking').addEventListener('click', () => {
+  showScreen(state.accessToken ? 'stages' : 'start');
+});
+document.getElementById('btnBackFromHistory').addEventListener('click', () => {
   showScreen(state.accessToken ? 'stages' : 'start');
 });
 document.getElementById('btnBackToStart').addEventListener('click', async () => {
@@ -83,6 +89,53 @@ function formatPlayTime(seconds) {
   const minutes = Math.floor(safeSeconds / 60);
   const remainder = safeSeconds % 60;
   return minutes > 0 ? `${minutes}分 ${remainder}秒` : `${remainder}秒`;
+}
+
+function formatRecordDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '時間未知';
+  return new Intl.DateTimeFormat('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date);
+}
+
+async function openHistory() {
+  const listEl = document.getElementById('historyList');
+  listEl.innerHTML = '<div class="history-empty">正在載入個人歷史戰績...</div>';
+  showScreen('history');
+  try {
+    const records = await api('GET', '/api/game-records/me');
+    if (records.length === 0) {
+      listEl.innerHTML = '<div class="history-empty">目前還沒有戰績，完成一場任務後就會留下紀錄。</div>';
+      return;
+    }
+
+    listEl.innerHTML = records.map((record, index) => {
+      const won = record.result.toUpperCase() === 'WIN';
+      return `
+        <article class="history-row">
+          <div class="history-sequence">${String(index + 1).padStart(2, '0')}</div>
+          <div class="history-main">
+            <time class="history-date">${escapeHtml(formatRecordDate(record.createdAt))}</time>
+            <strong>${escapeHtml(record.stageName)}</strong>
+            <span>任務 ${String(record.stageId).padStart(2, '0')}</span>
+          </div>
+          <span class="history-result ${won ? 'win' : 'lose'}">${won ? '勝利' : '失敗'}</span>
+          <div class="history-metrics">
+            <span><small>分數</small><b>${Number(record.score).toLocaleString()}</b></span>
+            <span><small>遊戲時間</small><b>${formatPlayTime(record.playTime)}</b></span>
+          </div>
+        </article>
+      `;
+    }).join('');
+  } catch (e) {
+    listEl.innerHTML = `<div class="history-empty">載入歷史戰績失敗：${escapeHtml(e.message)}</div>`;
+  }
 }
 
 async function openRanking() {
@@ -260,6 +313,11 @@ async function applyRouteFromLocation() {
     return;
   }
 
+  if (requestedScreen === 'history') {
+    if (currentScreenName !== 'history') await openHistory();
+    return;
+  }
+
   showScreen(requestedScreen, { updateRoute: false });
 }
 
@@ -280,6 +338,8 @@ window.addEventListener('hashchange', applyRouteFromLocation);
     errEl.textContent = '';
     if (requestedScreen === 'ranking') {
       await openRanking();
+    } else if (requestedScreen === 'history') {
+      await openHistory();
     } else {
       showScreen('stages', {
         updateRoute: true,

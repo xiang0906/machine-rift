@@ -1,6 +1,7 @@
 package com.machinerift.machine_rift.service;
 
 import com.machinerift.machine_rift.dto.GameRecordRequestDto;
+import com.machinerift.machine_rift.dto.GameRecordHistoryResponseDto;
 import com.machinerift.machine_rift.dto.GameRecordResponseDto;
 import com.machinerift.machine_rift.dto.RankingEntryResponseDto;
 import com.machinerift.machine_rift.dto.RankingResponseDto;
@@ -60,6 +61,16 @@ public class GameRecordService {
                 requestDto.getResult(),
                 requestDto.getPlayTime());
         return gameRecordMapper.toResponseDto(savedRecord);
+    }
+
+    /**
+     * Returns the authenticated player's latest twenty completed games.
+     */
+    @Transactional(readOnly = true)
+    public List<GameRecordHistoryResponseDto> getPlayerHistory(Player player) {
+        return gameRecordRepository.findTop20ByPlayerOrderByCreatedAtDescRecordIdDesc(player).stream()
+                .map(gameRecordMapper::toHistoryResponseDto)
+                .toList();
     }
 
     /**

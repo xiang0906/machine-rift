@@ -7,8 +7,55 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class DatabaseMigrationTest {
+
+    @Test
+    void v15AddsCreationTimeToExistingGameRecords() {
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setDriverClassName("org.h2.Driver");
+        dataSource.setUrl(
+                "jdbc:h2:mem:migration-v15;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
+        dataSource.setUsername("root");
+        dataSource.setPassword("");
+
+        Flyway.configure()
+                .dataSource(dataSource)
+                .target(MigrationVersion.fromVersion("14"))
+                .load()
+                .migrate();
+
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        jdbc.update("""
+                INSERT INTO player (
+                  player_id, player_name, level, created_at, username, password_hash
+                ) VALUES (
+                  998, 'History Player', 1, CURRENT_TIMESTAMP,
+                  'history_player', 'history-password-hash'
+                )
+                """);
+        jdbc.update("""
+                INSERT INTO game_record (
+                  record_id, player_id, stage_id, score, result, play_time
+                ) VALUES (998, 998, 1, 860, 'WIN', 95)
+                """);
+
+        Flyway.configure()
+                .dataSource(dataSource)
+                .load()
+                .migrate();
+
+        assertNotNull(jdbc.queryForObject(
+                "SELECT created_at FROM game_record WHERE record_id = 998",
+                java.sql.Timestamp.class));
+        assertEquals(1, jdbc.queryForObject("""
+                SELECT COUNT(*)
+                FROM INFORMATION_SCHEMA.INDEXES
+                WHERE TABLE_SCHEMA = 'PUBLIC'
+                  AND INDEX_NAME = 'IDX_GAME_RECORD_PLAYER_CREATED_AT'
+                """, Integer.class));
+    }
 
     @Test
     void v14PreservesProgressTowerCountAndLatestSession() {

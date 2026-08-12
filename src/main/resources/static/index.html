@@ -94,6 +94,10 @@
     </div>
   </header>
   <div class="workshop-notice" id="workshopNotice" role="status" aria-live="polite"></div>
+  <div class="unlock-legend" aria-label="防禦塔狀態說明">
+    <span class="unlock-key available">✓ 已解鎖，可帶入戰場</span>
+    <span class="unlock-key locked">◆ 未解鎖，需使用戰備金購買</span>
+  </div>
   <div class="workshop-grid" id="workshopTowerList"></div>
   <div class="btn-row">
     <button class="btn-secondary" id="btnBackFromWorkshop">返回遊戲大廳</button>
@@ -103,12 +107,16 @@
 <div id="screen-stages" class="card" hidden>
   <h2>選擇關卡 · <span id="currentPlayerName"></span></h2>
   <p class="screen-intro">選擇下一個防區，閱讀任務簡報後進入戰場。</p>
+  <div class="unlock-legend" aria-label="關卡狀態說明">
+    <span class="unlock-key available">✓ 已解鎖，可立即進入</span>
+    <span class="unlock-key locked">◆ 未解鎖，完成前置任務後開放</span>
+  </div>
   <div class="stage-list" id="stageList"></div>
   <details class="operation-guide">
     <summary id="operationGuideTitle">快速操作說明</summary>
     <ol>
       <li>選擇已解鎖關卡並確認任務簡報。</li>
-      <li>進場後選擇防禦塔，再點擊非路徑格子建造。</li>
+      <li>進場後選擇防禦塔，再點擊非路徑格子建造；金幣足夠時可連續放置同一座塔。</li>
       <li>完成配置後按下「開始波次」。</li>
       <li>守住基地並擊退所有敵人即可通關。</li>
     </ol>
@@ -198,7 +206,7 @@
         <button class="btn-primary" id="btnStartWave">開始波次</button>
         <button class="btn-secondary" id="btnQuitGame">放棄本局</button>
       </div>
-      <div class="hint" id="gameHint">點選塔種後，點選地圖上非路徑格子建造。</div>
+      <div class="hint" id="gameHint">點選塔種後，可在金幣足夠時連續建造同一座塔。</div>
     </aside>
   </div>
 </div>

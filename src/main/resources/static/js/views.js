@@ -146,15 +146,19 @@ function renderTowerWorkshop(message = '', messageType = '', purchasing = false)
       ? `永久解鎖 ${tower.unlockCost.toLocaleString()} G`
       : `尚缺 ${(tower.unlockCost - gold).toLocaleString()} G`;
     return `
-      <article class="workshop-card${unlocked ? ' unlocked' : ''}${!affordable ? ' unaffordable' : ''}"
-        style="--tower-color:${towerColor(tower.towerType)}">
+      <article class="workshop-card ${unlocked ? 'unlocked' : 'locked'}${!unlocked && affordable ? ' affordable' : ''}${!affordable ? ' unaffordable' : ''}"
+        style="--tower-color:${towerColor(tower.towerType)}"
+        aria-label="${escapeHtml(tower.towerName)}，${unlocked ? '已永久解鎖' : '尚未解鎖'}">
         <div class="workshop-tower-head">
           <span class="workshop-tower-icon" aria-hidden="true">${towerIconLabel(tower.towerType)}</span>
           <div>
             <span>${towerRoleLabel(tower.towerType)}</span>
             <strong>${escapeHtml(tower.towerName)}</strong>
           </div>
-          <span class="workshop-state">${unlocked ? '已解鎖' : '未解鎖'}</span>
+          <span class="workshop-state">${unlocked ? '✓ 已解鎖' : '◆ 未解鎖'}</span>
+        </div>
+        <div class="workshop-access-note">
+          ${unlocked ? '已加入你的戰場塔庫' : affordable ? '戰備金足夠，可立即永久解鎖' : '尚未取得，累積戰備金後即可購買'}
         </div>
         <div class="workshop-stats">
           <span><small>傷害</small><b>${tower.damage}</b></span>
@@ -370,15 +374,21 @@ function renderStageList() {
       && Array.isArray(s.waves) && s.waves.length > 0;
     const unlocked = s.progress?.unlocked === true;
     const canEnter = ready && unlocked;
+    const missionNumber = String(missionNumberForStage(s.stageId)).padStart(2, '0');
     const best = !unlocked
-      ? '尚未解鎖'
+      ? '完成前一關後開放'
       : s.progress?.bestScore == null
       ? '尚無紀錄'
       : `最佳 ${s.progress.bestScore} 分 / ${s.progress.bestPlayTime} 秒`;
+    const accessText = !unlocked ? '◆ 未解鎖' : ready ? '✓ 已解鎖' : '！資料未就緒';
     return `
-    <div class="stage-card${canEnter ? ' can-enter' : ' locked'}" data-id="${s.stageId}"
+    <div class="stage-card ${unlocked ? 'stage-unlocked' : 'locked'}${canEnter ? ' can-enter' : ''}" data-id="${s.stageId}"
       role="button" tabindex="${canEnter ? '0' : '-1'}" aria-disabled="${!canEnter}"
       aria-label="${escapeHtml(s.stageName)}，${canEnter ? '點擊進入任務簡報' : '目前無法進入'}">
+      <div class="stage-access-row">
+        <span class="stage-number">任務 ${missionNumber}</span>
+        <span class="stage-access ${unlocked ? 'available' : 'locked'}">${accessText}</span>
+      </div>
       <div class="stage-card-header">
         <div class="name">${escapeHtml(s.stageName)}</div>
         <span class="difficulty">${escapeHtml(s.difficulty)}</span>
@@ -391,6 +401,7 @@ function renderStageList() {
       </div>
       <div class="stage-card-footer">
         <span class="stage-best">${best}</span>
+        <span class="stage-action">${canEnter ? '進入任務 →' : '🔒 鎖定中'}</span>
       </div>
     </div>
   `;

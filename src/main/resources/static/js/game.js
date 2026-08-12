@@ -192,17 +192,30 @@ function renderTowerPanel() {
   panel.querySelectorAll('.tower-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = Number(btn.dataset.id);
+      const clickedTower = state.towers.find(t => t.towerId === id);
+      if (clickedTower && game.gold < clickedTower.cost) {
+        game.selectedTowerType = null;
+        syncSelectedTowerButtons();
+        document.getElementById('gameHint').textContent =
+          `金幣不足，「${clickedTower.towerName}」需要 ${clickedTower.cost}G，已取消選取。`;
+        return;
+      }
       game.selectedTowerType = game.selectedTowerType === id ? null : id;
       const selectedTower = state.towers.find(t => t.towerId === game.selectedTowerType);
-      panel.querySelectorAll('.tower-btn').forEach(b => {
-        const isSelected = Number(b.dataset.id) === game.selectedTowerType;
-        b.classList.toggle('selected', isSelected);
-        b.setAttribute('aria-pressed', String(isSelected));
-      });
+      syncSelectedTowerButtons();
       document.getElementById('gameHint').textContent = selectedTower
-        ? `已選擇「${selectedTower.towerName}」：將游標移到地圖，綠色可建造、紅色不可建造。`
+        ? `已選擇「${selectedTower.towerName}」：金幣足夠時可連續建造，再點一次塔卡可取消。`
         : '請選擇一座防禦塔，再點擊非路徑格子建造。';
     });
+  });
+}
+
+function syncSelectedTowerButtons() {
+  if (!game) return;
+  document.querySelectorAll('#towerPanel .tower-btn').forEach(button => {
+    const isSelected = Number(button.dataset.id) === game.selectedTowerType;
+    button.classList.toggle('selected', isSelected);
+    button.setAttribute('aria-pressed', String(isSelected));
   });
 }
 
@@ -505,12 +518,12 @@ canvas.addEventListener('click', event => {
     cooldown: 0, name: cfg.towerName, type: cfg.towerType,
     aimAngle: -Math.PI / 2, muzzleFlashUntil: 0, recoilUntil: 0,
   });
-  game.selectedTowerType = null;
-  document.querySelectorAll('#towerPanel .tower-btn').forEach(button => {
-    button.classList.remove('selected');
-  });
-  document.getElementById('gameHint').textContent =
-    `「${cfg.towerName}」建造完成，剩餘 ${game.gold}G。請重新選塔以建造下一座。`;
+  const canContinueBuilding = game.gold >= cfg.cost;
+  if (!canContinueBuilding) game.selectedTowerType = null;
+  syncSelectedTowerButtons();
+  document.getElementById('gameHint').textContent = canContinueBuilding
+    ? `「${cfg.towerName}」建造完成，剩餘 ${game.gold}G。可繼續點擊空格建造同一座塔。`
+    : `「${cfg.towerName}」建造完成，剩餘 ${game.gold}G，不足以再建造同一座，已自動取消選取。`;
   updateHud();
 });
 

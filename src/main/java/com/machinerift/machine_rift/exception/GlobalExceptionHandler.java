@@ -13,6 +13,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Central exception handler for all REST endpoints.
@@ -33,12 +34,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationException(
             MethodArgumentNotValidException exception) {
-        Map<String, String> errors = exception.getBindingResult().getFieldErrors().stream()
-                .collect(java.util.stream.Collectors.toMap(
-                        FieldError::getField,
-                        FieldError::getDefaultMessage,
-                        (firstError, ignored) -> firstError,
-                        LinkedHashMap::new));
+        Map<String, String> errors = new LinkedHashMap<>();
+        for (FieldError fieldError : exception.getBindingResult().getFieldErrors()) {
+            errors.putIfAbsent(
+                    fieldError.getField(),
+                    Objects.requireNonNullElse(
+                            fieldError.getDefaultMessage(), "欄位格式不正確"));
+        }
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.failure("輸入資料有誤", errors));

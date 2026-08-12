@@ -56,13 +56,48 @@ document.getElementById('registerPasswordConfirmInput').addEventListener('keydow
 function renderLobby() {
   const progress = state.progress;
   if (!progress) return;
+  const completedStages = Math.min(Number(progress.completedStages) || 0, state.stages.length);
+  const unlockedTowerCount = progress.unlockedTowers.length;
+  const totalStages = state.stages.length;
+  const totalTowers = state.totalTowerCount;
   document.getElementById('lobbyPlayerName').textContent = state.playerName;
+  document.getElementById('lobbyCommanderName').textContent = state.playerName;
+  document.getElementById('lobbyPlayerInitial').textContent = state.playerName.trim().charAt(0).toUpperCase() || 'C';
   document.getElementById('lobbyLevel').textContent = progress.level;
   document.getElementById('lobbyGold').textContent = progress.gold.toLocaleString();
-  document.getElementById('lobbyStages').textContent =
-    `${progress.completedStages} / ${state.stages.length}`;
-  document.getElementById('lobbyTowers').textContent =
-    `${progress.unlockedTowers.length} / ${state.totalTowerCount}`;
+  document.getElementById('lobbyStages').textContent = `${completedStages} / ${totalStages}`;
+  document.getElementById('lobbyTowers').textContent = `${unlockedTowerCount} / ${totalTowers}`;
+  document.getElementById('lobbyStageProgress').style.width =
+    `${totalStages ? completedStages / totalStages * 100 : 0}%`;
+  document.getElementById('lobbyTowerProgress').style.width =
+    `${totalTowers ? unlockedTowerCount / totalTowers * 100 : 0}%`;
+  document.getElementById('lobbyProgressStatus').textContent =
+    completedStages === totalStages ? 'SECTOR SECURED' : 'DEFENSE IN PROGRESS';
+
+  const nextStage = state.stages.find(stage =>
+    stage.progress?.unlocked === true && stage.progress?.bestScore == null
+  );
+  const unlockedTowerIds = new Set(progress.unlockedTowers.map(tower => tower.towerId));
+  const affordableTower = state.allTowers.find(tower =>
+    !unlockedTowerIds.has(tower.towerId) && progress.gold >= tower.unlockCost
+  );
+  const recommendationTitle = document.getElementById('lobbyRecommendationTitle');
+  const recommendationText = document.getElementById('lobbyRecommendationText');
+  const recommendationMeta = document.getElementById('lobbyRecommendationMeta');
+  if (nextStage) {
+    const missionNumber = String(missionNumberForStage(nextStage.stageId)).padStart(2, '0');
+    recommendationTitle.textContent = `執行任務 ${missionNumber}｜${nextStage.stageName}`;
+    recommendationText.textContent = '此防區已開放且尚未留下通關紀錄，建議優先部署。';
+    recommendationMeta.textContent = `${nextStage.difficulty} · ${nextStage.waves?.length || 0} 波敵襲`;
+  } else if (affordableTower) {
+    recommendationTitle.textContent = `解鎖「${affordableTower.towerName}」`;
+    recommendationText.textContent = '目前戰備金足夠，可前往工坊擴充永久塔庫。';
+    recommendationMeta.textContent = `永久解鎖 ${affordableTower.unlockCost.toLocaleString()} G`;
+  } else {
+    recommendationTitle.textContent = '巡查既有防區';
+    recommendationText.textContent = '目前沒有新的優先項目，可重返任務提升個人最佳戰績。';
+    recommendationMeta.textContent = 'ALL SYSTEMS STANDBY';
+  }
 }
 
 document.getElementById('btnLobbyStages').addEventListener('click', () => {

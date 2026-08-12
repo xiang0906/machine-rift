@@ -46,36 +46,58 @@
 
 <div id="screen-lobby" class="card" hidden>
   <header class="lobby-hero">
-    <div>
+    <div class="lobby-hero-copy">
       <span class="badge">裂隙防衛總部</span>
-      <h1>作戰大廳</h1>
-      <p>歡迎回來，指揮官 <strong id="lobbyPlayerName"></strong>。選擇本次要執行的行動。</p>
+      <span class="lobby-online"><i></i> COMMAND NETWORK ONLINE</span>
+      <h1>裂隙作戰指揮中心</h1>
+      <p>防衛網已連線。指揮官 <strong id="lobbyPlayerName"></strong>，請確認戰備狀態並選擇下一步行動。</p>
     </div>
-    <button class="btn-secondary lobby-logout" id="btnLogout">登出</button>
+    <div class="lobby-radar" aria-hidden="true">
+      <span class="radar-sweep"></span>
+      <i class="radar-contact contact-a"></i>
+      <i class="radar-contact contact-b"></i>
+      <b>RIFT<br>SCAN</b>
+    </div>
+    <button class="btn-secondary lobby-logout" id="btnLogout">登出系統</button>
   </header>
-  <section class="lobby-status" aria-label="玩家進度摘要">
-    <div><span>指揮官等級</span><b id="lobbyLevel">1</b></div>
-    <div><span>永久戰備金</span><b><span id="lobbyGold">0</span> G</b></div>
-    <div><span>完成關卡</span><b id="lobbyStages">0 / 6</b></div>
-    <div><span>解鎖防禦塔</span><b id="lobbyTowers">0 / 6</b></div>
+  <section class="lobby-command-board" aria-label="指揮官與進度摘要">
+    <div class="commander-card">
+      <span class="commander-avatar" id="lobbyPlayerInitial" aria-hidden="true">C</span>
+      <div><small>ACTIVE COMMANDER</small><strong id="lobbyCommanderName"></strong><span>授權等級 <b>LV.<span id="lobbyLevel">1</span></b></span></div>
+      <div class="commander-balance"><small>永久戰備金</small><b><span id="lobbyGold">0</span> G</b></div>
+    </div>
+    <div class="lobby-progress-panel">
+      <div class="lobby-progress-heading"><span>防衛網同步進度</span><small id="lobbyProgressStatus">SYSTEM SYNC</small></div>
+      <div class="lobby-progress-item">
+        <div><span>任務完成</span><b id="lobbyStages">0 / 6</b></div>
+        <div class="lobby-progress-track"><i id="lobbyStageProgress"></i></div>
+      </div>
+      <div class="lobby-progress-item">
+        <div><span>防禦塔解鎖</span><b id="lobbyTowers">0 / 6</b></div>
+        <div class="lobby-progress-track tower"><i id="lobbyTowerProgress"></i></div>
+      </div>
+    </div>
+    <div class="lobby-recommendation">
+      <span>◆ 系統建議行動</span>
+      <strong id="lobbyRecommendationTitle">讀取戰術資料中</strong>
+      <p id="lobbyRecommendationText">正在分析目前可執行的任務。</p>
+      <small id="lobbyRecommendationMeta">TACTICAL PRIORITY</small>
+    </div>
   </section>
   <section class="lobby-actions" aria-label="大廳功能">
     <button class="lobby-action lobby-action-primary" id="btnLobbyStages">
-      <span class="lobby-action-code">MISSION</span>
-      <strong>開始任務</strong>
-      <small>選擇已解鎖防區，進入塔防戰場</small>
-      <i>前往選擇關卡 →</i>
+      <span class="lobby-action-icon mission-icon" aria-hidden="true"><i></i></span>
+      <span class="lobby-action-content"><span class="lobby-action-code">MISSION CONTROL</span><strong>開始任務</strong><small>選擇已解鎖防區，部署防禦塔並守住裂隙路線</small></span>
+      <i>進入任務控制台 →</i>
     </button>
-    <button class="lobby-action" id="btnLobbyWorkshop">
-      <span class="lobby-action-code">ARSENAL</span>
-      <strong>防禦塔工坊</strong>
-      <small>使用永久戰備金，自由解鎖新的防禦塔</small>
+    <button class="lobby-action lobby-action-workshop" id="btnLobbyWorkshop">
+      <span class="lobby-action-icon workshop-icon" aria-hidden="true">⚙</span>
+      <span class="lobby-action-content"><span class="lobby-action-code">ARSENAL</span><strong>防禦塔工坊</strong><small>使用永久戰備金，自由解鎖新的防禦塔</small></span>
       <i>進入塔庫整備 →</i>
     </button>
     <button class="lobby-action lobby-action-records" id="btnLobbyRecords">
-      <span class="lobby-action-code">RECORD CENTER</span>
-      <strong>戰績中心</strong>
-      <small>查看個人最近 20 場任務紀錄，並與排行榜前 10 名比較</small>
+      <span class="lobby-action-icon records-icon" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="lobby-action-content"><span class="lobby-action-code">BATTLE DATA</span><strong>戰績中心</strong><small>查看個人最近 20 場任務紀錄，並與排行榜前 10 名比較</small></span>
       <i>開啟戰績中心 →</i>
     </button>
   </section>

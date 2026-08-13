@@ -54,9 +54,16 @@ const START_BASE_HP = 10;
 const PROJECTILE_SPEED = 320;
 const HIT_RADIUS = 8;
 const TOWER_TURN_SPEED = 7;
+const REDUCED_MOTION = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 let game = null;
 let rafId = null;
+
+function setGameHint(message, tone = 'neutral') {
+  const hint = document.getElementById('gameHint');
+  hint.textContent = message;
+  hint.dataset.tone = tone;
+}
 
 function stopCurrentGame() {
   if (rafId) cancelAnimationFrame(rafId);
@@ -100,8 +107,7 @@ function startGame() {
     `任務 ${String(missionNumberForStage(stage.stageId)).padStart(2, '0')}｜${stage.stageName}`;
   renderTowerPanel();
   updateHud();
-  document.getElementById('gameHint').textContent =
-    '操作：選擇塔種 → 點擊非路徑格建造 → 完成配置後開始波次。';
+  setGameHint('操作：選擇塔種 → 點擊非路徑格建造 → 完成配置後開始波次。');
   document.getElementById('btnStartWave').disabled = false;
   showScreen('game');
   draw();
@@ -196,16 +202,15 @@ function renderTowerPanel() {
       if (clickedTower && game.gold < clickedTower.cost) {
         game.selectedTowerType = null;
         syncSelectedTowerButtons();
-        document.getElementById('gameHint').textContent =
-          `金幣不足，「${clickedTower.towerName}」需要 ${clickedTower.cost}G，已取消選取。`;
+        setGameHint(`金幣不足，「${clickedTower.towerName}」需要 ${clickedTower.cost}G，已取消選取。`, 'danger');
         return;
       }
       game.selectedTowerType = game.selectedTowerType === id ? null : id;
       const selectedTower = state.towers.find(t => t.towerId === game.selectedTowerType);
       syncSelectedTowerButtons();
-      document.getElementById('gameHint').textContent = selectedTower
+      setGameHint(selectedTower
         ? `已選擇「${selectedTower.towerName}」：金幣足夠時可連續建造，再點一次塔卡可取消。`
-        : '請選擇一座防禦塔，再點擊非路徑格子建造。';
+        : '請選擇一座防禦塔，再點擊非路徑格子建造。', selectedTower ? 'info' : 'neutral');
     });
   });
 }
@@ -305,7 +310,7 @@ function drawTowerMuzzleFlash(tower, color, now) {
   ctx.strokeStyle = color;
   ctx.lineWidth = 2;
   ctx.shadowColor = color;
-  ctx.shadowBlur = 14;
+  ctx.shadowBlur = 7;
   positions.forEach(([x, y]) => {
     ctx.beginPath();
     ctx.arc(x, y, 3.5 + life * 2, 0, Math.PI * 2);
@@ -324,7 +329,7 @@ function drawTowerBody(tower, alpha = 1, now = performance.now()) {
   ctx.translate(tower.x, tower.y);
   ctx.globalAlpha = alpha;
   ctx.shadowColor = color;
-  ctx.shadowBlur = 9;
+  ctx.shadowBlur = 3;
 
   // Shared mounting plate keeps every tower anchored to the grid.
   ctx.fillStyle = '#07121f';
@@ -334,7 +339,7 @@ function drawTowerBody(tower, alpha = 1, now = performance.now()) {
   ctx.arc(0, 0, 16, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
-  ctx.shadowBlur = 5;
+  ctx.shadowBlur = 2;
 
   const aimAngle = Number.isFinite(tower.aimAngle) ? tower.aimAngle : -Math.PI / 2;
   const recoil = tower.recoilUntil > now
@@ -505,7 +510,7 @@ canvas.addEventListener('click', event => {
   if (!cell) return;
   const placement = towerPlacementStatus(cell.col, cell.row);
   if (!placement.valid) {
-    document.getElementById('gameHint').textContent = placement.reason;
+    setGameHint(placement.reason, 'warning');
     return;
   }
   const { col, row } = cell;
@@ -521,9 +526,10 @@ canvas.addEventListener('click', event => {
   const canContinueBuilding = game.gold >= cfg.cost;
   if (!canContinueBuilding) game.selectedTowerType = null;
   syncSelectedTowerButtons();
-  document.getElementById('gameHint').textContent = canContinueBuilding
+  setGameHint(canContinueBuilding
     ? `「${cfg.towerName}」建造完成，剩餘 ${game.gold}G。可繼續點擊空格建造同一座塔。`
-    : `「${cfg.towerName}」建造完成，剩餘 ${game.gold}G，不足以再建造同一座，已自動取消選取。`;
+    : `「${cfg.towerName}」建造完成，剩餘 ${game.gold}G，不足以再建造同一座，已自動取消選取。`,
+  canContinueBuilding ? 'success' : 'warning');
   updateHud();
 });
 
@@ -532,7 +538,7 @@ document.getElementById('btnStartWave').addEventListener('click', () => {
   game.waveActive = true;
   game.startedAt = performance.now();
   document.getElementById('btnStartWave').disabled = true;
-  document.getElementById('gameHint').textContent = `第 1/${game.waves.length} 波進行中...敵人抵達基地會扣血。`;
+  setGameHint(`第 1/${game.waves.length} 波進行中，敵人抵達基地會扣血。`, 'info');
   updateHud();
 });
 
@@ -673,14 +679,12 @@ function loop(ts) {
       if (game.waveIndex >= game.waves.length - 1) {
         game.waveActive = false;
         game.victoryAt = ts + 550;
-        document.getElementById('gameHint').textContent =
-          '最後目標已清除，正在確認戰場狀態...';
+        setGameHint('最後目標已清除，正在確認戰場狀態…', 'success');
       } else {
         game.waveIndex++;
         game.spawnedInWave = 0;
         game.spawnTimer = 1200;
-        document.getElementById('gameHint').textContent =
-          `第 ${game.waveIndex + 1}/${game.waves.length} 波即將開始...`;
+        setGameHint(`第 ${game.waveIndex + 1}/${game.waves.length} 波即將開始…`, 'info');
       }
     }
     updateHud();
@@ -729,6 +733,35 @@ function drawBattlefieldBase(now) {
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  // Static terrain sectors add map depth without introducing decorative noise.
+  const terrainZones = [
+    { label: 'SECTOR A', points: [[18, 28], [205, 18], [238, 112], [62, 142]] },
+    { label: 'SECTOR B', points: [[452, 22], [682, 54], [654, 176], [488, 142]] },
+    { label: 'SECTOR C', points: [[72, 270], [260, 238], [308, 382], [28, 376]] },
+    { label: 'SECTOR D', points: [[418, 248], [652, 220], [688, 378], [458, 388]] },
+  ];
+  ctx.save();
+  ctx.setLineDash([5, 7]);
+  ctx.lineWidth = 1;
+  ctx.font = '8px monospace';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  terrainZones.forEach((zone, index) => {
+    ctx.beginPath();
+    zone.points.forEach(([x, y], pointIndex) => {
+      if (pointIndex === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.closePath();
+    ctx.fillStyle = index % 2 === 0 ? 'rgba(54, 115, 143, 0.12)' : 'rgba(74, 125, 151, 0.09)';
+    ctx.strokeStyle = 'rgba(126, 190, 216, 0.2)';
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(157, 204, 224, 0.52)';
+    ctx.fillText(zone.label, zone.points[0][0] + 7, zone.points[0][1] + 7);
+  });
+  ctx.restore();
+
   // Faint circuit traces make the board feel like a powered machine surface.
   ctx.save();
   ctx.strokeStyle = 'rgba(77, 208, 225, 0.055)';
@@ -750,6 +783,18 @@ function drawBattlefieldBase(now) {
     ctx.fill();
   }
   ctx.restore();
+
+  // A brief, low-intensity sweep appears intermittently instead of glowing continuously.
+  const scanCycle = now % 6500;
+  if (!REDUCED_MOTION && scanCycle < 850) {
+    const scanY = scanCycle / 850 * canvas.height;
+    const scanGradient = ctx.createLinearGradient(0, scanY - 18, 0, scanY + 4);
+    scanGradient.addColorStop(0, 'rgba(98,213,232,0)');
+    scanGradient.addColorStop(0.82, 'rgba(98,213,232,0.075)');
+    scanGradient.addColorStop(1, 'rgba(98,213,232,0.2)');
+    ctx.fillStyle = scanGradient;
+    ctx.fillRect(0, scanY - 18, canvas.width, 22);
+  }
 }
 
 function drawGridSurface() {
@@ -782,7 +827,7 @@ function drawPathLayer(now) {
   ctx.lineJoin = 'round';
 
   ctx.shadowColor = '#35b9df';
-  ctx.shadowBlur = 18;
+  ctx.shadowBlur = 4;
   ctx.strokeStyle = 'rgba(40, 161, 203, 0.24)';
   ctx.lineWidth = 44;
   traceRoute(game.route);
@@ -866,6 +911,25 @@ function drawBuildableCells() {
   ctx.restore();
 }
 
+function drawBlueprintCoordinates() {
+  ctx.save();
+  ctx.fillStyle = 'rgba(158, 205, 224, 0.46)';
+  ctx.font = '8px monospace';
+  ctx.textBaseline = 'top';
+  ctx.textAlign = 'left';
+  for (let col = 0; col < COLS; col++) {
+    ctx.fillText(String.fromCharCode(65 + col), col * CELL + 4, 3);
+  }
+  ctx.textBaseline = 'bottom';
+  for (let row = 0; row < ROWS; row++) {
+    ctx.fillText(String(row + 1).padStart(2, '0'), 3, (row + 1) * CELL - 3);
+  }
+  ctx.strokeStyle = 'rgba(98, 213, 232, 0.38)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, canvas.width - 2, canvas.height - 2);
+  ctx.restore();
+}
+
 function draw() {
   const now = performance.now();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -880,6 +944,7 @@ function draw() {
   ctx.lineWidth = 1;
   for (let c = 0; c <= COLS; c++) { ctx.beginPath(); ctx.moveTo(c * CELL, 0); ctx.lineTo(c * CELL, ROWS * CELL); ctx.stroke(); }
   for (let r = 0; r <= ROWS; r++) { ctx.beginPath(); ctx.moveTo(0, r * CELL); ctx.lineTo(COLS * CELL, r * CELL); ctx.stroke(); }
+  drawBlueprintCoordinates();
   drawBuildableCells();
 
   if (game) {
@@ -894,7 +959,7 @@ function draw() {
     ctx.translate(p0.x, p0.y);
     ctx.rotate(angle);
     ctx.strokeStyle = '#ff5252'; ctx.lineWidth = 2;
-    ctx.shadowColor = '#ff5252'; ctx.shadowBlur = 10;
+    ctx.shadowColor = '#ff5252'; ctx.shadowBlur = 4;
     ctx.beginPath(); ctx.arc(0, 0, 16, 0, Math.PI * 2); ctx.stroke();
     ctx.beginPath();
     ctx.moveTo(-4, -8); ctx.lineTo(8, 0); ctx.lineTo(-4, 8);
@@ -906,7 +971,7 @@ function draw() {
 
     // Base — what the player is defending
     ctx.save();
-    ctx.shadowColor = '#4dd0e1'; ctx.shadowBlur = 14;
+    ctx.shadowColor = '#4dd0e1'; ctx.shadowBlur = 4;
     ctx.fillStyle = '#4dd0e1';
     ctx.beginPath();
     ctx.moveTo(pl.x, pl.y - 17);
@@ -1006,9 +1071,17 @@ function updateHud() {
     : 0;
   const elapsedMinutes = Math.floor(elapsedSeconds / 60);
   const remainingSeconds = elapsedSeconds % 60;
-  document.getElementById('hudWave').textContent = displayedWave === 0
+  const waveEl = document.getElementById('hudWave');
+  waveEl.textContent = displayedWave === 0
     ? `等待部署｜共 ${game.waves.length} 波`
     : `第 ${displayedWave} / ${game.waves.length} 波`;
+  waveEl.dataset.state = displayedWave === 0 ? 'standby' : 'active';
+  if (displayedWave > 0 && game.lastDisplayedWave !== displayedWave) {
+    waveEl.classList.remove('wave-changed');
+    void waveEl.offsetWidth;
+    waveEl.classList.add('wave-changed');
+  }
+  game.lastDisplayedWave = displayedWave;
   document.getElementById('hudTime').textContent =
     `${String(elapsedMinutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
   document.getElementById('hudEnemies').textContent = game.spawned + '/' + game.enemyCount;

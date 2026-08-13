@@ -104,15 +104,18 @@
 </div>
 
 <div id="screen-workshop" class="card" hidden>
-  <header class="workshop-hero">
-    <div>
-      <span class="badge">防衛軍械庫</span>
+  <header class="page-hero workshop-hero">
+    <div class="page-hero-copy">
+      <span class="badge">ARSENAL · 防衛軍械庫</span>
       <h1>防禦塔工坊</h1>
       <p>解鎖為帳號永久持有；進入戰場後仍需使用該局金幣建造。</p>
     </div>
-    <div class="workshop-balance">
-      <span>永久戰備金</span>
-      <b><span id="workshopGold">0</span> G</b>
+    <div class="page-hero-actions">
+      <button class="btn-secondary page-back" id="btnBackFromWorkshop">← 返回遊戲大廳</button>
+      <div class="workshop-balance">
+        <span>永久戰備金</span>
+        <b><span id="workshopGold">0</span> G</b>
+      </div>
     </div>
   </header>
   <div class="workshop-notice" id="workshopNotice" role="status" aria-live="polite"></div>
@@ -121,14 +124,19 @@
     <span class="unlock-key locked">◆ 未解鎖，需使用戰備金購買</span>
   </div>
   <div class="workshop-grid" id="workshopTowerList"></div>
-  <div class="btn-row">
-    <button class="btn-secondary" id="btnBackFromWorkshop">返回遊戲大廳</button>
-  </div>
 </div>
 
 <div id="screen-stages" class="card" hidden>
-  <h2>選擇關卡 · <span id="currentPlayerName"></span></h2>
-  <p class="screen-intro">選擇下一個防區，閱讀任務簡報後進入戰場。</p>
+  <header class="page-hero stage-hero">
+    <div class="page-hero-copy">
+      <span class="badge">MISSION CONTROL · 裂隙防區</span>
+      <h1>選擇作戰任務</h1>
+      <p>指揮官 <strong id="currentPlayerName"></strong>，請選擇防區並閱讀任務簡報。</p>
+    </div>
+    <div class="page-hero-actions">
+      <button class="btn-secondary page-back" id="btnBackToLobby">← 返回遊戲大廳</button>
+    </div>
+  </header>
   <div class="unlock-legend" aria-label="關卡狀態說明">
     <span class="unlock-key available">✓ 已解鎖，可立即進入</span>
     <span class="unlock-key locked">◆ 未解鎖，完成前置任務後開放</span>
@@ -143,26 +151,23 @@
       <li>守住基地並擊退所有敵人即可通關。</li>
     </ol>
   </details>
-  <div class="btn-row">
-    <button class="btn-secondary" id="btnBackToLobby">返回遊戲大廳</button>
-  </div>
 </div>
 
 <div id="screen-records" class="card" hidden>
-  <div class="records-hero">
-    <div>
-      <span class="badge">裂隙作戰資料庫</span>
+  <header class="page-hero records-hero">
+    <div class="page-hero-copy">
+      <span class="badge">BATTLE DATA · 裂隙作戰資料庫</span>
       <h1>戰績中心</h1>
       <p>集中查看個人任務紀錄，以及全服指揮官的最佳排名。</p>
     </div>
-    <div class="records-hero-actions">
+    <div class="page-hero-actions records-hero-actions">
+      <button class="btn-secondary page-back" id="btnBackFromRecords">← 返回遊戲大廳</button>
       <div class="records-emblem" aria-hidden="true">
         <span>BATTLE DATA</span>
         <b>REC / TOP</b>
       </div>
-      <button class="btn-secondary records-back" id="btnBackFromRecords">← 返回遊戲大廳</button>
     </div>
-  </div>
+  </header>
   <div class="records-tabs" role="tablist" aria-label="戰績檢視模式">
     <button class="records-tab active" id="btnRecordsHistory" role="tab"
       aria-selected="true" aria-controls="recordsHistoryPanel">個人歷史</button>
@@ -196,14 +201,17 @@
 
 <div id="screen-game" class="card" hidden>
   <div class="game-mission-title">
-    <strong id="gameMissionTitle">任務 --｜等待部署</strong>
-    <span id="hudWave">等待部署</span>
+    <div>
+      <small>ACTIVE MISSION · 當前任務</small>
+      <strong id="gameMissionTitle">任務 --｜等待部署</strong>
+    </div>
+    <span id="hudWave" data-state="standby">等待部署</span>
   </div>
-  <div id="hud">
-    <span>遊戲時間 <b id="hudTime">00:00</b></span>
-    <span>生成進度 <b id="hudEnemies">0/0</b></span>
-    <span id="hudHpWrap">基地血量 <b id="hudHp">0</b></span>
-    <span>分數 <b id="hudScore">0</b></span>
+  <div id="hud" aria-label="戰場狀態">
+    <span class="hud-stat"><small>作戰時間</small><b id="hudTime">00:00</b></span>
+    <span class="hud-stat"><small>生成進度</small><b id="hudEnemies">0/0</b></span>
+    <span class="hud-stat hud-hp" id="hudHpWrap"><small>基地耐久</small><b id="hudHp">0</b></span>
+    <span class="hud-stat"><small>目前分數</small><b id="hudScore">0</b></span>
   </div>
   <div class="game-layout">
     <div class="game-board">
@@ -228,7 +236,7 @@
         <button class="btn-primary" id="btnStartWave">開始波次</button>
         <button class="btn-secondary" id="btnQuitGame">放棄本局</button>
       </div>
-      <div class="hint" id="gameHint">點選塔種後，可在金幣足夠時連續建造同一座塔。</div>
+      <div class="hint game-feedback" id="gameHint" role="status" aria-live="polite" data-tone="neutral">點選塔種後，可在金幣足夠時連續建造同一座塔。</div>
     </aside>
   </div>
 </div>

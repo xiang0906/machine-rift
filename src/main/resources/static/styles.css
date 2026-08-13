@@ -1310,6 +1310,64 @@
   }
   .briefing-objectives b { font-size: 0.9rem; }
   .briefing-actions { justify-content: center; }
+  .orientation-overlay {
+    background: rgba(2, 8, 18, 0.88);
+    backdrop-filter: blur(9px);
+    z-index: 45;
+  }
+  .orientation-card {
+    width: min(470px, calc(100% - 28px));
+    padding: 28px;
+    text-align: center;
+    border-color: rgba(77,208,225,0.34);
+    box-shadow: 0 24px 70px rgba(0,0,0,0.58), 0 0 36px rgba(77,208,225,0.1);
+  }
+  .orientation-device {
+    position: relative;
+    width: 54px;
+    height: 88px;
+    margin: 10px auto 22px;
+    border: 3px solid var(--accent);
+    border-radius: 10px;
+    box-shadow: inset 0 0 18px rgba(77,208,225,0.12), 0 0 18px rgba(77,208,225,0.16);
+    animation: rotateDevice 2.6s ease-in-out infinite;
+  }
+  .orientation-device::before {
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    width: 17px;
+    height: 3px;
+    border-radius: 999px;
+    background: rgba(77,208,225,0.65);
+    transform: translateX(-50%);
+  }
+  .orientation-device span {
+    position: absolute;
+    inset: 14px 6px 7px;
+    border: 1px solid rgba(77,208,225,0.22);
+    border-radius: 4px;
+    background:
+      linear-gradient(rgba(77,208,225,0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(77,208,225,0.08) 1px, transparent 1px),
+      rgba(7,20,38,0.9);
+    background-size: 9px 9px;
+  }
+  @keyframes rotateDevice {
+    0%, 22% { transform: rotate(0deg); }
+    45%, 78% { transform: rotate(90deg); }
+    100% { transform: rotate(0deg); }
+  }
+  .orientation-card h2 { margin-bottom: 10px; }
+  .orientation-card > p { max-width: 390px; margin: 0 auto; font-size: 0.9rem; }
+  .orientation-auto-hint {
+    margin-top: 13px !important;
+    color: #69f0ae !important;
+    font-size: 0.72rem !important;
+    letter-spacing: 0.04em;
+  }
+  .orientation-actions { justify-content: center; margin-top: 22px; }
   .result-message {
     max-width: 520px;
     margin: 14px auto 8px;
@@ -1318,5 +1376,8 @@
   .result-lose { color: var(--bad); }
   @media (max-width: 620px) {
     .briefing-objectives { grid-template-columns: 1fr; }
+    .orientation-card { padding: 24px 18px; }
+    .orientation-actions { display: grid; grid-template-columns: 1fr; }
+    .orientation-actions button { width: 100%; }
   }
   [hidden] { display: none !important; }

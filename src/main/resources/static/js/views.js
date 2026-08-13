@@ -470,9 +470,39 @@ function openMissionBriefing(stage) {
   document.getElementById('overlay-briefing').hidden = false;
 }
 
+const mobilePortraitQuery = window.matchMedia(
+  '(max-width: 900px) and (orientation: portrait) and (pointer: coarse)'
+);
+let orientationDeploymentPending = false;
+
+function completePendingDeployment() {
+  if (!orientationDeploymentPending) return;
+  orientationDeploymentPending = false;
+  document.getElementById('overlay-orientation').hidden = true;
+  startGame();
+}
+
 document.getElementById('btnDeploy').addEventListener('click', () => {
   document.getElementById('overlay-briefing').hidden = true;
-  startGame();
+  if (!mobilePortraitQuery.matches) {
+    startGame();
+    return;
+  }
+  orientationDeploymentPending = true;
+  document.getElementById('overlay-orientation').hidden = false;
+  requestAnimationFrame(() => document.getElementById('btnContinuePortrait').focus());
+});
+
+document.getElementById('btnContinuePortrait').addEventListener('click', completePendingDeployment);
+
+document.getElementById('btnReturnBriefing').addEventListener('click', () => {
+  orientationDeploymentPending = false;
+  document.getElementById('overlay-orientation').hidden = true;
+  document.getElementById('overlay-briefing').hidden = false;
+});
+
+mobilePortraitQuery.addEventListener('change', event => {
+  if (orientationDeploymentPending && !event.matches) completePendingDeployment();
 });
 
 document.getElementById('btnCancelBriefing').addEventListener('click', () => {

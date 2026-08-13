@@ -249,6 +249,23 @@
   </div>
 </div>
 
+<div id="overlay-orientation" class="overlay orientation-overlay" hidden
+  role="dialog" aria-modal="true" aria-labelledby="orientationTitle" aria-describedby="orientationMessage">
+  <div class="card orientation-card">
+    <span class="badge">行動裝置提示</span>
+    <div class="orientation-device" aria-hidden="true">
+      <span></span>
+    </div>
+    <h2 id="orientationTitle">請將手機旋轉為橫向</h2>
+    <p id="orientationMessage">橫向模式能完整顯示戰場、HUD 與防禦塔庫，也能讓建塔位置更容易點選。</p>
+    <p class="orientation-auto-hint">旋轉完成後會自動進入戰場</p>
+    <div class="btn-row orientation-actions">
+      <button class="btn-primary" id="btnContinuePortrait">仍以直式進入</button>
+      <button class="btn-secondary" id="btnReturnBriefing">返回任務簡報</button>
+    </div>
+  </div>
+</div>
+
 <div id="overlay-result" class="overlay" hidden>
   <div class="card">
     <h1 id="resultTitle"></h1>

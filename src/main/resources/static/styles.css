@@ -1373,8 +1373,8 @@
     box-shadow: none;
   }
   .tower-btn.selected .tower-selected-label { display: inline-block; }
-  .tower-btn.selected .tower-role,
-  .tower-btn.selected .tower-unaffordable-label { display: none; }
+  .tower-btn.selected .tower-role { display: none; }
+  .tower-btn.selected.unaffordable .tower-unaffordable-label { display: inline-block; }
   .tower-btn.unaffordable:not(.selected) {
     opacity: 0.56;
     filter: saturate(0.5);

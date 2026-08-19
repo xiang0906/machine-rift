@@ -17,8 +17,6 @@ import java.util.List;
 public class PlayerProgressResponseDto {
 
     private Long playerId;
-    private Integer level;
-    private Integer experience;
     private Integer gold;
     private Integer completedStages;
     private List<PlayerStageProgressResponseDto> stages;

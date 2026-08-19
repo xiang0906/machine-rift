@@ -30,8 +30,6 @@ class GameRecordRepositoryTest {
                 .playerName("Alice")
                 .username("alice")
                 .passwordHash("test-password-hash")
-                .level(1)
-                .experience(0)
                 .gold(0)
                 .completedStages(0)
                 .createdAt(LocalDateTime.now())

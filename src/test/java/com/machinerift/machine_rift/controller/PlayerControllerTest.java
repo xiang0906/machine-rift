@@ -59,8 +59,7 @@ class PlayerControllerTest {
         when(playerProgressService.getProgress(authenticatedPlayer))
                 .thenReturn(PlayerProgressResponseDto.builder()
                         .playerId(5L)
-                        .level(3)
-                        .experience(2200)
+                        .gold(350)
                         .build());
 
         mockMvc.perform(get("/api/players/me/progress")
@@ -68,7 +67,7 @@ class PlayerControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("已取得玩家進度"))
                 .andExpect(jsonPath("$.data.playerId").value(5))
-                .andExpect(jsonPath("$.data.level").value(3));
+                .andExpect(jsonPath("$.data.gold").value(350));
     }
 
     @Test

@@ -54,8 +54,6 @@ public class AuthService {
                     .username(username)
                     .passwordHash(passwordEncoder.encode(request.getPassword()))
                     .playerName(playerName)
-                    .level(1)
-                    .experience(0)
                     .gold(0)
                     .completedStages(0)
                     .createdAt(now)

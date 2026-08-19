@@ -38,12 +38,6 @@ public class Player {
     @Column(name = "password_hash", nullable = false, length = 100)
     private String passwordHash;
 
-    @Column(name = "level", nullable = false)
-    private Integer level;
-
-    @Column(name = "experience", nullable = false)
-    private Integer experience;
-
     @Column(name = "gold", nullable = false)
     private Integer gold;
 

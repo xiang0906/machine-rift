@@ -14,6 +14,108 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class DatabaseMigrationTest {
 
     @Test
+    void v21AddsTenSpeedToStandardEnemiesAndKeepsDroneSpeed() {
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setDriverClassName("org.h2.Driver");
+        dataSource.setUrl(
+                "jdbc:h2:mem:migration-v21;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
+        dataSource.setUsername("root");
+        dataSource.setPassword("");
+
+        Flyway.configure()
+                .dataSource(dataSource)
+                .target(MigrationVersion.fromVersion("20"))
+                .load()
+                .migrate();
+
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        Flyway.configure().dataSource(dataSource).load().migrate();
+
+        assertEquals(92.0, enemySpeed(jdbc, "疾風無人機"));
+        assertEquals(72.0, enemySpeed(jdbc, "偵察機"));
+        assertEquals(55.0, enemySpeed(jdbc, "裝甲機"));
+        assertEquals(50.0, enemySpeed(jdbc, "護盾機兵"));
+        assertEquals(48.0, enemySpeed(jdbc, "裂隙核心"));
+        assertEquals(39.0, enemySpeed(jdbc, "裂隙巨像"));
+    }
+
+    @Test
+    void v20SpeedsUpDurableEnemiesWithoutChangingEarlyEnemySpeed() {
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setDriverClassName("org.h2.Driver");
+        dataSource.setUrl(
+                "jdbc:h2:mem:migration-v20;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
+        dataSource.setUsername("root");
+        dataSource.setPassword("");
+
+        Flyway.configure()
+                .dataSource(dataSource)
+                .target(MigrationVersion.fromVersion("19"))
+                .load()
+                .migrate();
+
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        Flyway.configure()
+                .dataSource(dataSource)
+                .target(MigrationVersion.fromVersion("20"))
+                .load()
+                .migrate();
+
+        assertEquals(62.0, enemySpeed(jdbc, "偵察機"));
+        assertEquals(45.0, enemySpeed(jdbc, "裝甲機"));
+        assertEquals(92.0, enemySpeed(jdbc, "疾風無人機"));
+        assertEquals(40.0, enemySpeed(jdbc, "護盾機兵"));
+        assertEquals(38.0, enemySpeed(jdbc, "裂隙核心"));
+        assertEquals(29.0, enemySpeed(jdbc, "裂隙巨像"));
+    }
+
+    private double enemySpeed(JdbcTemplate jdbc, String enemyName) {
+        return jdbc.queryForObject(
+                "SELECT speed FROM enemy WHERE enemy_name = ?", Double.class, enemyName);
+    }
+
+    @Test
+    void v19RemovesUnusedLevelAndExperienceWhilePreservingPlayerData() {
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setDriverClassName("org.h2.Driver");
+        dataSource.setUrl(
+                "jdbc:h2:mem:migration-v19;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
+        dataSource.setUsername("root");
+        dataSource.setPassword("");
+
+        Flyway.configure()
+                .dataSource(dataSource)
+                .target(MigrationVersion.fromVersion("18"))
+                .load()
+                .migrate();
+
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        jdbc.update("""
+                INSERT INTO player (
+                  player_id, player_name, username, password_hash, level, experience,
+                  gold, completed_stages, created_at, updated_at
+                ) VALUES (
+                  996, 'Lean Player', 'lean_player', 'password-hash', 4, 3450,
+                  780, 3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                )
+                """);
+
+        Flyway.configure().dataSource(dataSource).load().migrate();
+
+        assertEquals(0, jdbc.queryForObject("""
+                SELECT COUNT(*)
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = 'PUBLIC'
+                  AND TABLE_NAME = 'PLAYER'
+                  AND COLUMN_NAME IN ('LEVEL', 'EXPERIENCE')
+                """, Integer.class));
+        assertEquals(780, jdbc.queryForObject(
+                "SELECT gold FROM player WHERE player_id = 996", Integer.class));
+        assertEquals(3, jdbc.queryForObject(
+                "SELECT completed_stages FROM player WHERE player_id = 996", Integer.class));
+    }
+
+    @Test
     void v18GraduallyIncreasesStagePressureAndKeepsSummariesSynchronized() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName("org.h2.Driver");

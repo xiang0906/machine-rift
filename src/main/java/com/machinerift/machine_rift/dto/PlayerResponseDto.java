@@ -18,6 +18,5 @@ public class PlayerResponseDto {
 
     private Long playerId;
     private String playerName;
-    private Integer level;
     private LocalDateTime createdAt;
 }

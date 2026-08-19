@@ -29,8 +29,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PlayerProgressService {
 
-    private static final int EXPERIENCE_PER_LEVEL = 1000;
-
     private final PlayerRepository playerRepository;
     private final PlayerStageProgressRepository playerStageProgressRepository;
     private final PlayerTowerUnlockRepository playerTowerUnlockRepository;
@@ -46,10 +44,6 @@ public class PlayerProgressService {
     public void initializePlayer(Player player) {
         LocalDateTime now = LocalDateTime.now();
         boolean playerChanged = false;
-        if (player.getExperience() == null) {
-            player.setExperience(0);
-            playerChanged = true;
-        }
         if (player.getGold() == null) {
             player.setGold(0);
             playerChanged = true;
@@ -122,8 +116,6 @@ public class PlayerProgressService {
 
         return PlayerProgressResponseDto.builder()
                 .playerId(playerId)
-                .level(player.getLevel())
-                .experience(player.getExperience())
                 .gold(player.getGold())
                 .completedStages(player.getCompletedStages())
                 .stages(stages)
@@ -164,7 +156,6 @@ public class PlayerProgressService {
             stageProgress.setBestPlayTime(playTime);
         }
 
-        player.setExperience(player.getExperience() + score);
         if ("WIN".equalsIgnoreCase(result)) {
             boolean firstCompletion = stageProgress.getCompletionCount() == 0;
             stageProgress.setCompletionCount(stageProgress.getCompletionCount() + 1);
@@ -175,7 +166,6 @@ public class PlayerProgressService {
             unlockNextStage(player, stage, now);
         }
 
-        player.setLevel(1 + player.getExperience() / EXPERIENCE_PER_LEVEL);
         stageProgress.setUnlocked(true);
         stageProgress.setUpdatedAt(now);
         player.setUpdatedAt(now);

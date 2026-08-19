@@ -54,6 +54,7 @@ const START_BASE_HP = 10;
 const PROJECTILE_SPEED = 320;
 const HIT_RADIUS = 8;
 const TOWER_TURN_SPEED = 7;
+const MIN_ENEMY_BODY_GAP = 8;
 const REDUCED_MOTION = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 let game = null;
@@ -199,10 +200,9 @@ function renderTowerPanel() {
     btn.addEventListener('click', () => {
       const id = Number(btn.dataset.id);
       const clickedTower = state.towers.find(t => t.towerId === id);
-      if (clickedTower && game.gold < clickedTower.cost) {
-        game.selectedTowerType = null;
-        syncSelectedTowerButtons();
-        setGameHint(`金幣不足，「${clickedTower.towerName}」需要 ${clickedTower.cost}G，已取消選取。`, 'danger');
+      if (clickedTower && game.gold < clickedTower.cost
+          && game.selectedTowerType !== id) {
+        setGameHint(`金幣不足，「${clickedTower.towerName}」需要 ${clickedTower.cost}G。`, 'danger');
         return;
       }
       game.selectedTowerType = game.selectedTowerType === id ? null : id;
@@ -524,11 +524,10 @@ canvas.addEventListener('click', event => {
     aimAngle: -Math.PI / 2, muzzleFlashUntil: 0, recoilUntil: 0,
   });
   const canContinueBuilding = game.gold >= cfg.cost;
-  if (!canContinueBuilding) game.selectedTowerType = null;
   syncSelectedTowerButtons();
   setGameHint(canContinueBuilding
     ? `「${cfg.towerName}」建造完成，剩餘 ${game.gold}G。可繼續點擊空格建造同一座塔。`
-    : `「${cfg.towerName}」建造完成，剩餘 ${game.gold}G，不足以再建造同一座，已自動取消選取。`,
+    : `「${cfg.towerName}」建造完成，剩餘 ${game.gold}G。已保留選取，取得足夠金幣後可直接繼續建造。`,
   canContinueBuilding ? 'success' : 'warning');
   updateHud();
 });
@@ -547,6 +546,7 @@ function spawnEnemy(wave) {
   const config = wave.enemy;
   game.enemies.push({
     x: start.x, y: start.y, pathIdx: 0,
+    distanceTravelled: 0,
     hp: config.health,
     maxHp: config.health,
     speed: config.speed,
@@ -557,6 +557,12 @@ function spawnEnemy(wave) {
   });
   game.spawned++;
   game.spawnedInWave++;
+}
+
+function hasEnoughSpawnClearance(wave) {
+  const nextEnemyRadius = enemyRadius(wave.enemy.enemyName);
+  return game.enemies.every(enemy => !enemy.alive
+    || enemy.distanceTravelled >= nextEnemyRadius + enemy.radius + MIN_ENEMY_BODY_GAP);
 }
 
 function enemyColor(name) {
@@ -596,7 +602,9 @@ function loop(ts) {
   if (game.waveActive && !game.ended) {
     const currentWave = game.waves[game.waveIndex];
     game.spawnTimer -= dt;
-    if (currentWave && game.spawnTimer <= 0 && game.spawnedInWave < currentWave.enemyCount) {
+    if (currentWave && game.spawnTimer <= 0
+        && game.spawnedInWave < currentWave.enemyCount
+        && hasEnoughSpawnClearance(currentWave)) {
       spawnEnemy(currentWave);
       game.spawnTimer = currentWave.spawnIntervalMs;
     }
@@ -604,6 +612,7 @@ function loop(ts) {
     game.enemies.forEach(e => {
       if (!e.alive) return;
       let remaining = e.speed * dt / 1000;
+      e.distanceTravelled += remaining;
       while (remaining > 0 && e.pathIdx < game.pathPoints.length - 1) {
         const target = game.pathPoints[e.pathIdx + 1];
         const dx = target.x - e.x, dy = target.y - e.y, d = Math.hypot(dx, dy);
@@ -996,15 +1005,22 @@ function draw() {
       drawTowerBody(t, 1, now);
     });
     game.enemies.forEach(e => {
-      const healthBarWidth = Math.max(24, e.radius * 2);
-      const healthBarX = e.x - healthBarWidth / 2;
-      const healthBarY = e.y - e.radius - 8;
       ctx.fillStyle = e.hitFlashUntil > now ? '#ffffff' : enemyColor(e.name);
       ctx.beginPath(); ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,0.2)';
-      ctx.fillRect(healthBarX, healthBarY, healthBarWidth, 4);
+    });
+    // Draw compact health bars in a separate top layer so enemy bodies cannot
+    // cover them while a tightly packed group still looks visually aligned.
+    game.enemies.forEach(e => {
+      const healthBarWidth = 20;
+      const healthBarX = e.x - healthBarWidth / 2;
+      const healthBarY = Math.max(2, e.y - e.radius - 7);
+      ctx.fillStyle = 'rgba(3, 10, 18, 0.88)';
+      ctx.fillRect(healthBarX, healthBarY, healthBarWidth, 3);
       ctx.fillStyle = '#4caf50';
-      ctx.fillRect(healthBarX, healthBarY, healthBarWidth * (e.hp / e.maxHp), 4);
+      ctx.fillRect(healthBarX, healthBarY, healthBarWidth * (e.hp / e.maxHp), 3);
+      ctx.strokeStyle = 'rgba(220, 245, 250, 0.3)';
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(healthBarX, healthBarY, healthBarWidth, 3);
     });
     game.projectiles.forEach(p => {
       ctx.fillStyle = '#ffe082';

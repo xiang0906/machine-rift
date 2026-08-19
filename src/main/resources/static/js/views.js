@@ -63,7 +63,6 @@ function renderLobby() {
   document.getElementById('lobbyPlayerName').textContent = state.playerName;
   document.getElementById('lobbyCommanderName').textContent = state.playerName;
   document.getElementById('lobbyPlayerInitial').textContent = state.playerName.trim().charAt(0).toUpperCase() || 'C';
-  document.getElementById('lobbyLevel').textContent = progress.level;
   document.getElementById('lobbyGold').textContent = progress.gold.toLocaleString();
   document.getElementById('lobbyStages').textContent = `${completedStages} / ${totalStages}`;
   document.getElementById('lobbyTowers').textContent = `${unlockedTowerCount} / ${totalTowers}`;

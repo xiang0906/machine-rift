@@ -20,7 +20,6 @@ public class PlayerMapper {
         return PlayerResponseDto.builder()
                 .playerId(player.getPlayerId())
                 .playerName(player.getPlayerName())
-                .level(player.getLevel())
                 .createdAt(player.getCreatedAt())
                 .build();
     }

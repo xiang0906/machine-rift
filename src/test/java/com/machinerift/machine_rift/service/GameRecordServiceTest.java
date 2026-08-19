@@ -192,7 +192,7 @@ class GameRecordServiceTest {
     }
 
     private Player player(Long id) {
-        return Player.builder().playerId(id).playerName("Player " + id).level(1).build();
+        return Player.builder().playerId(id).playerName("Player " + id).build();
     }
 
     private Stage stage(Long id) {

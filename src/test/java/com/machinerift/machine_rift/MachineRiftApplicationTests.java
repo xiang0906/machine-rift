@@ -185,7 +185,6 @@ class MachineRiftApplicationTests {
 		mockMvc.perform(get("/api/players/me/progress")
 						.header("Authorization", "Bearer " + accessToken))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.data.experience").value(0))
 				.andExpect(jsonPath("$.data.stages[0].unlocked").value(true))
 				.andExpect(jsonPath("$.data.stages[1].unlocked").value(false))
 				.andExpect(jsonPath("$.data.unlockedTowers.length()").value(1));
@@ -291,8 +290,6 @@ class MachineRiftApplicationTests {
 		mockMvc.perform(get("/api/players/me/progress")
 						.header("Authorization", "Bearer " + restoredToken))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.data.level").value(2))
-				.andExpect(jsonPath("$.data.experience").value(1200))
 				.andExpect(jsonPath("$.data.gold").value(50))
 				.andExpect(jsonPath("$.data.completedStages").value(1))
 				.andExpect(jsonPath("$.data.stages[0].bestScore").value(1200))
@@ -322,7 +319,7 @@ class MachineRiftApplicationTests {
 		mockMvc.perform(get("/api/players/me/progress")
 						.header("Authorization", "Bearer " + replacementToken))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.data.experience").value(1200));
+				.andExpect(jsonPath("$.data.gold").value(50));
 	}
 
 	@Test

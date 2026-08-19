@@ -199,18 +199,16 @@ function renderTowerPanel() {
   panel.querySelectorAll('.tower-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = Number(btn.dataset.id);
-      const clickedTower = state.towers.find(t => t.towerId === id);
-      if (clickedTower && game.gold < clickedTower.cost
-          && game.selectedTowerType !== id) {
-        setGameHint(`金幣不足，「${clickedTower.towerName}」需要 ${clickedTower.cost}G。`, 'danger');
-        return;
-      }
       game.selectedTowerType = game.selectedTowerType === id ? null : id;
       const selectedTower = state.towers.find(t => t.towerId === game.selectedTowerType);
+      const canAffordSelectedTower = selectedTower && game.gold >= selectedTower.cost;
       syncSelectedTowerButtons();
       setGameHint(selectedTower
-        ? `已選擇「${selectedTower.towerName}」：金幣足夠時可連續建造，再點一次塔卡可取消。`
-        : '請選擇一座防禦塔，再點擊非路徑格子建造。', selectedTower ? 'info' : 'neutral');
+        ? canAffordSelectedTower
+          ? `已選擇「${selectedTower.towerName}」：可連續建造，再點一次塔卡可取消。`
+          : `已選擇「${selectedTower.towerName}」：目前金幣不足，取得足夠金幣後即可建造。`
+        : '請選擇一座防禦塔，再點擊非路徑格子建造。',
+      selectedTower ? (canAffordSelectedTower ? 'info' : 'warning') : 'neutral');
     });
   });
 }

@@ -27,7 +27,7 @@ Machine Rift 是一款以瀏覽器 Canvas 呈現的塔防遊戲。Spring Boot �
 | 密碼 | Spring Security Crypto、BCrypt |
 | 正式資料庫 | MySQL |
 | 測試資料庫 | H2（MySQL mode） |
-| Migration | Flyway V1～V17 |
+| Migration | Flyway V1～V18 |
 | API 文件 | springdoc-openapi／Swagger UI |
 | 前端 | HTML、CSS、Vanilla JavaScript、Canvas 2D |
 | 建置 | Maven Wrapper |
@@ -159,6 +159,8 @@ V16 恢復 `player_tower_unlock`，依 V14 保存的數量與塔造價順序搬�
 再移除 `player.unlocked_tower_count`。
 V17 為 `tower` 加入 `unlock_cost`，將永久解鎖價格與單局建造造價分開。購買時會鎖定
 玩家資料，並在同一個 transaction 內檢查重複解鎖、確認永久戰備金、扣款及建立解鎖紀錄。
+V18 保留第 1 關教學強度，逐步提高第 2～6 關敵人數量；第 4～6 關同步縮短生成間隔，
+並把全域高階敵人「裂隙核心、裂隙巨像」的基礎生命提高 10%。
 
 ## 8. API 現況
 
@@ -248,6 +250,7 @@ Controller 成功訊息、DTO 驗證訊息及 Service 業務錯誤皆統一使�
 - V14 升級 V15 時為既有戰績補上建立日期與查詢索引
 - V15 升級 V16 時將塔解鎖數量還原成正確的玩家與塔關聯
 - V16 升級 V17 時為六座塔加入永久解鎖價格
+- V17 升級 V18 時驗證六關敵人總數、各波生成間隔與高階敵人生命
 - 最終資料庫保留九張業務資料表
 
 最近一次完整測試、JavaScript 語法檢查與 Maven 打包皆通過。

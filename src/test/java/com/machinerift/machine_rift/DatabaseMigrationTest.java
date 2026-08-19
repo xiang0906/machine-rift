@@ -14,6 +14,54 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class DatabaseMigrationTest {
 
     @Test
+    void v18GraduallyIncreasesStagePressureAndKeepsSummariesSynchronized() {
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setDriverClassName("org.h2.Driver");
+        dataSource.setUrl(
+                "jdbc:h2:mem:migration-v18;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
+        dataSource.setUsername("root");
+        dataSource.setPassword("");
+
+        Flyway.configure()
+                .dataSource(dataSource)
+                .target(MigrationVersion.fromVersion("17"))
+                .load()
+                .migrate();
+
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        Flyway.configure().dataSource(dataSource).load().migrate();
+
+        assertEquals(List.of(10, 19, 28, 35, 42, 51), jdbc.queryForList("""
+                SELECT enemy_count FROM stage ORDER BY stage_id
+                """, Integer.class));
+        assertEquals(List.of(5, 5), waveValues(jdbc, "裂隙前線", "enemy_count"));
+        assertEquals(List.of(6, 6, 7), waveValues(jdbc, "機械迴廊", "enemy_count"));
+        assertEquals(List.of(8, 8, 8, 4), waveValues(jdbc, "核心裂谷", "enemy_count"));
+        assertEquals(List.of(7, 7, 7, 7, 7), waveValues(jdbc, "熔火交叉口", "enemy_count"));
+        assertEquals(List.of(585, 585, 648, 720, 810),
+                waveValues(jdbc, "熔火交叉口", "spawn_interval_ms"));
+        assertEquals(List.of(8, 8, 8, 7, 7, 4), waveValues(jdbc, "量子迷城", "enemy_count"));
+        assertEquals(List.of(510, 550, 600, 670, 750, 970),
+                waveValues(jdbc, "量子迷城", "spawn_interval_ms"));
+        assertEquals(List.of(10, 10, 10, 9, 7, 5), waveValues(jdbc, "機神核心", "enemy_count"));
+        assertEquals(List.of(430, 460, 530, 600, 660, 850),
+                waveValues(jdbc, "機神核心", "spawn_interval_ms"));
+        assertEquals(165, jdbc.queryForObject(
+                "SELECT health FROM enemy WHERE enemy_name = '裂隙核心'", Integer.class));
+        assertEquals(286, jdbc.queryForObject(
+                "SELECT health FROM enemy WHERE enemy_name = '裂隙巨像'", Integer.class));
+    }
+
+    private List<Integer> waveValues(JdbcTemplate jdbc, String stageName, String column) {
+        return jdbc.queryForList("""
+                SELECT %s
+                FROM stage_wave
+                WHERE stage_id = (SELECT stage_id FROM stage WHERE stage_name = ?)
+                ORDER BY wave_number
+                """.formatted(column), Integer.class, stageName);
+    }
+
+    @Test
     void v15AddsCreationTimeToExistingGameRecords() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName("org.h2.Driver");

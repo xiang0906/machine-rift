@@ -112,6 +112,8 @@ Windows PowerShell：
   逐筆紀錄後移除 `player.unlocked_tower_count`，為後續自由選塔購買保留正確資料模型。
 - V17 會為六座塔加入獨立的永久解鎖價格；戰場建造造價 `cost` 與帳號解鎖價格
   `unlock_cost` 分開管理。
+- V18 進行第一輪關卡難度平衡：第 1 關維持教學強度，第 2～6 關逐步增加敵人數量，
+  第 4～6 關縮短生成間隔，並將兩種高階敵人的基礎生命提高 10%。
 - 既有 MVP 資料庫若尚未有 Flyway history，啟動時會 baseline 為 V1，再執行後續 migration；
   seed migration 只補上缺少的同名內容，不覆寫既有資料。
 - 核心資料表：`player`、`player_stage_progress`、`player_tower_unlock`、`stage`、

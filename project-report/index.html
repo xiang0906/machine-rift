@@ -1,0 +1,787 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Machine Rift 機械裂隙專案四頁式網頁報告">
+  <title>Machine Rift｜專案架構報告</title>
+  <link rel="stylesheet" href="report.css">
+</head>
+<body>
+  <header class="report-header">
+    <div class="header-grid">
+      <div class="brand-block">
+        <div class="brand-mark" aria-hidden="true">MR</div>
+        <div>
+          <p class="eyebrow">MVP SYSTEM REPORT · 2026</p>
+          <h1>Machine Rift <span>機械裂隙</span></h1>
+          <p class="subtitle">Spring Boot × MySQL × HTML Canvas｜單人塔防網頁遊戲專案報告</p>
+        </div>
+      </div>
+      <div class="tech-list" aria-label="核心技術">
+        <span>Java 21</span>
+        <span>Spring Boot 3.5.16</span>
+        <span>MySQL / JPA</span>
+        <span>Flyway V21</span>
+        <span>Canvas / JavaScript</span>
+      </div>
+    </div>
+
+    <nav class="page-tabs" aria-label="報告頁面">
+      <button class="page-tab is-active" type="button" data-page="overview" aria-selected="true">
+        <span>01</span>總覽與核心流程
+      </button>
+      <button class="page-tab" type="button" data-page="backend" aria-selected="false">
+        <span>02</span>後端架構與模組
+      </button>
+      <button class="page-tab" type="button" data-page="frontend" aria-selected="false">
+        <span>03</span>前端與遊戲核心
+      </button>
+      <button class="page-tab" type="button" data-page="data" aria-selected="false">
+        <span>04</span>資料庫・API・測試
+      </button>
+    </nav>
+  </header>
+
+  <main class="report-shell">
+    <section class="report-page is-active" id="overview" aria-labelledby="overview-title">
+      <div class="page-heading">
+        <div>
+          <p class="section-index">PAGE 01 / PROJECT OVERVIEW</p>
+          <h2 id="overview-title">專案總覽與核心流程</h2>
+          <p>從玩家登入、進行塔防遊戲，到永久保存進度與戰績，形成一條可完整展示的 MVP 流程。</p>
+        </div>
+        <div class="page-number">01</div>
+      </div>
+
+      <div class="hero-panel">
+        <div class="hero-copy">
+          <p class="kicker">PROJECT POSITIONING</p>
+          <h3>能登入、能操作、能存資料、能展示成果的完整塔防 MVP</h3>
+          <p>《Machine Rift 機械裂隙》是一款前後端整合的單人塔防網頁遊戲。玩家能建立帳號、永久解鎖防禦塔、挑戰六個資料庫驅動的關卡，並在重新登入後恢復進度與戰績。</p>
+        </div>
+        <div class="metric-grid">
+          <div class="metric"><strong>6</strong><span>關卡</span></div>
+          <div class="metric"><strong>6</strong><span>防禦塔</span></div>
+          <div class="metric"><strong>6</strong><span>敵人種類</span></div>
+          <div class="metric"><strong>9</strong><span>業務資料表</span></div>
+          <div class="metric"><strong>11</strong><span>REST API</span></div>
+          <div class="metric"><strong>39</strong><span>自動化測試</span></div>
+        </div>
+      </div>
+
+      <article class="report-card flow-card accent-cyan">
+        <div class="card-title-row">
+          <div>
+            <p class="card-label">CORE USER JOURNEY</p>
+            <h3>玩家核心操作流程</h3>
+          </div>
+          <span class="status-badge success">流程完整</span>
+        </div>
+        <div class="process-flow" aria-label="玩家核心流程">
+          <div class="process-step"><b>01</b><span>註冊／登入</span><small>建立玩家身分</small></div>
+          <i aria-hidden="true">→</i>
+          <div class="process-step"><b>02</b><span>遊戲大廳</span><small>選擇下一步</small></div>
+          <i aria-hidden="true">→</i>
+          <div class="process-step"><b>03</b><span>解鎖防禦塔</span><small>使用永久金幣</small></div>
+          <i aria-hidden="true">→</i>
+          <div class="process-step"><b>04</b><span>選擇關卡</span><small>查看任務情報</small></div>
+          <i aria-hidden="true">→</i>
+          <div class="process-step"><b>05</b><span>塔防戰鬥</span><small>建塔與抵禦波次</small></div>
+          <i aria-hidden="true">→</i>
+          <div class="process-step"><b>06</b><span>戰績中心</span><small>歷史與排行榜</small></div>
+        </div>
+      </article>
+
+      <article class="report-card showcase-card accent-blue">
+        <div class="card-title-row">
+          <div>
+            <p class="card-label">PRODUCT SHOWCASE</p>
+            <h3>實際作品內容</h3>
+          </div>
+          <span class="status-badge">4 個主要體驗區域</span>
+        </div>
+        <div class="product-showcase">
+          <div class="showcase-item">
+            <div class="screen-preview login-preview" aria-hidden="true">
+              <div class="preview-top"><span></span><span></span><span></span></div>
+              <div class="login-panel-mini">
+                <b>MACHINE RIFT</b>
+                <i></i><i></i><em>登入裂隙系統</em>
+              </div>
+            </div>
+            <div class="showcase-copy">
+              <b><span>01</span>玩家登入與大廳</b>
+              <p>建立帳號後由 Token 恢復玩家身分，登入大廳再選擇工坊、關卡或戰績中心。</p>
+            </div>
+          </div>
+
+          <div class="showcase-item">
+            <div class="screen-preview workshop-preview" aria-hidden="true">
+              <div class="preview-top"><span></span><span></span><span></span></div>
+              <div class="tower-mini-grid">
+                <i class="tower-mini cyan"></i><i class="tower-mini yellow"></i><i class="tower-mini purple"></i>
+              </div>
+              <div class="workshop-bar"><span></span><b>永久解鎖</b></div>
+            </div>
+            <div class="showcase-copy">
+              <b><span>02</span>工坊與關卡選擇</b>
+              <p>使用永久金幣自由購買六種防禦塔，並查看六個關卡的解鎖狀態與最佳成績。</p>
+            </div>
+          </div>
+
+          <div class="showcase-item">
+            <div class="screen-preview battle-preview" aria-hidden="true">
+              <div class="battle-hud-mini"><span>任務 03</span><span>第 2 / 4 波</span></div>
+              <div class="battle-route-mini"></div>
+              <i class="built-tower one"></i><i class="built-tower two"></i>
+              <i class="enemy-dot a"></i><i class="enemy-dot b"></i><i class="enemy-dot c"></i>
+            </div>
+            <div class="showcase-copy">
+              <b><span>03</span>Canvas 塔防戰場</b>
+              <p>依資料庫路線與波次生成敵人，玩家建塔、取得金幣並守住基地完成任務。</p>
+            </div>
+          </div>
+
+          <div class="showcase-item">
+            <div class="screen-preview records-preview" aria-hidden="true">
+              <div class="preview-top"><span></span><span></span><span></span></div>
+              <div class="ranking-mini">
+                <div><b>1</b><span></span><em>1280</em></div>
+                <div><b>2</b><span></span><em>1060</em></div>
+                <div><b>3</b><span></span><em>920</em></div>
+              </div>
+            </div>
+            <div class="showcase-copy">
+              <b><span>04</span>戰績中心</b>
+              <p>查看最近 20 筆個人歷史，以及由後端整理的全關卡與單關前十名排行榜。</p>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="report-card accent-purple">
+        <div class="card-title-row">
+          <div>
+            <p class="card-label">SYSTEM BOUNDARY</p>
+            <h3>前端、後端與資料庫的責任</h3>
+          </div>
+        </div>
+        <div class="layer-diagram">
+          <div class="layer frontend-layer"><span>瀏覽器前端</span><small>頁面、Canvas、戰鬥模擬、視覺回饋</small></div>
+          <div class="layer-arrow">HTTP / JSON</div>
+          <div class="layer backend-layer"><span>Spring Boot 後端</span><small>登入、規則、解鎖、進度、戰績、排行</small></div>
+          <div class="layer-arrow">JPA</div>
+          <div class="layer database-layer"><span>MySQL 資料庫</span><small>帳號、遊戲內容、永久進度與歷史資料</small></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="report-page" id="backend" aria-labelledby="backend-title" hidden>
+      <div class="page-heading">
+        <div>
+          <p class="section-index">PAGE 02 / BACKEND ARCHITECTURE</p>
+          <h2 id="backend-title">後端架構與功能模組</h2>
+          <p>採用 Spring Boot 分層架構，Controller 接收請求、Service 執行規則、Repository 操作 MySQL。</p>
+        </div>
+        <div class="page-number">02</div>
+      </div>
+
+      <article class="report-card accent-cyan">
+        <p class="card-label">REQUEST PIPELINE</p>
+        <h3>後端請求處理鏈</h3>
+        <div class="architecture-flow">
+          <div><strong>Controller</strong><small>HTTP、驗證、Token</small></div><i>→</i>
+          <div><strong>Service</strong><small>商業規則、交易</small></div><i>→</i>
+          <div><strong>Repository</strong><small>JPA 查詢與保存</small></div><i>→</i>
+          <div><strong>Entity</strong><small>資料表關聯模型</small></div><i>→</i>
+          <div><strong>MySQL</strong><small>永久保存資料</small></div>
+        </div>
+        <p class="diagram-note">DTO 控制 API 輸入輸出，Mapper 負責 Entity 與 DTO 轉換，GlobalExceptionHandler 統一處理中文錯誤。</p>
+      </article>
+
+      <article class="report-card backend-module-report accent-blue">
+        <div class="card-title-row">
+          <div>
+            <p class="card-label">FUNCTIONAL MODULES</p>
+            <h3>五個後端功能模組</h3>
+          </div>
+          <button class="function-overview-button" id="open-function-overview" type="button">查看 Function 全覽</button>
+        </div>
+
+        <div class="backend-domain-grid">
+          <section class="domain-card auth-domain">
+            <div class="domain-head"><b>01</b><div><strong>會員與登入</strong><span>Auth</span></div></div>
+            <p>建立玩家身分、驗證密碼、簽發與撤銷登入 Token。</p>
+            <div class="domain-row"><small>Controller</small><code>AuthController</code></div>
+            <div class="endpoint-lines">
+              <span><b>POST</b> /api/auth/register</span>
+              <span><b>POST</b> /api/auth/login</span>
+              <span><b>GET</b> /api/auth/me</span>
+              <span><b>POST</b> /api/auth/logout</span>
+            </div>
+            <div class="function-chips"><code>register()</code><code>login()</code><code>requirePlayer()</code><code>createSession()</code></div>
+            <footer><span>Player</span><span>PlayerRepository</span><span>BCrypt / SHA-256</span></footer>
+          </section>
+
+          <section class="domain-card progress-domain">
+            <div class="domain-head"><b>02</b><div><strong>玩家進度</strong><span>Progress</span></div></div>
+            <p>恢復玩家的金幣、關卡進度、最佳戰績與永久解鎖塔。</p>
+            <div class="domain-row"><small>Controller</small><code>PlayerController</code></div>
+            <div class="endpoint-lines">
+              <span><b>GET</b> /api/players/me/progress</span>
+            </div>
+            <div class="function-chips"><code>initializePlayer()</code><code>getProgress()</code><code>recordGameResult()</code><code>unlockNextStage()</code></div>
+            <footer><span>PlayerStageProgress</span><span>PlayerTowerUnlock</span><span>PlayerProgressService</span></footer>
+          </section>
+
+          <section class="domain-card stage-domain">
+            <div class="domain-head"><b>03</b><div><strong>關卡內容</strong><span>Stage Content</span></div></div>
+            <p>由資料庫組合關卡、路徑節點、波次與敵人數值。</p>
+            <div class="domain-row"><small>Controller</small><code>StageController</code></div>
+            <div class="endpoint-lines">
+              <span><b>GET</b> /api/stages</span>
+            </div>
+            <div class="function-chips"><code>getAllStages()</code><code>StageMapper.toResponseDto()</code></div>
+            <footer><span>Stage</span><span>StagePath</span><span>StageWave</span><span>Enemy</span></footer>
+          </section>
+
+          <section class="domain-card tower-domain">
+            <div class="domain-head"><b>04</b><div><strong>防禦塔工坊</strong><span>Tower Workshop</span></div></div>
+            <p>提供塔數值，並以交易方式處理永久金幣扣款與解鎖。</p>
+            <div class="domain-row"><small>Controller</small><code>TowerController</code></div>
+            <div class="endpoint-lines">
+              <span><b>GET</b> /api/towers</span>
+              <span><b>POST</b> /api/towers/{towerId}/unlock</span>
+            </div>
+            <div class="function-chips"><code>getAllTowers()</code><code>unlockTower()</code><code>findByIdForUpdate()</code></div>
+            <footer><span>Tower</span><span>PlayerTowerUnlock</span><span>悲觀鎖</span></footer>
+          </section>
+
+          <section class="domain-card record-domain">
+            <div class="domain-head"><b>05</b><div><strong>戰績與排行</strong><span>Records</span></div></div>
+            <p>保存單局結果、回傳個人歷史，並在後端整理最佳成績前十名。</p>
+            <div class="domain-row"><small>Controller</small><code>GameRecordController</code></div>
+            <div class="endpoint-lines">
+              <span><b>POST</b> /api/game-records</span>
+              <span><b>GET</b> /api/game-records/me</span>
+              <span><b>GET</b> /api/rankings</span>
+            </div>
+            <div class="function-chips"><code>saveGameRecord()</code><code>getPlayerHistory()</code><code>getRankings()</code></div>
+            <footer><span>GameRecord</span><span>GameRecordRepository</span><span>GameRecordMapper</span></footer>
+          </section>
+        </div>
+      </article>
+
+      <article class="report-card accent-purple">
+        <div class="card-title-row">
+          <div>
+            <p class="card-label">LAYER INVENTORY</p>
+            <h3>後端分層與檔案完整盤點</h3>
+          </div>
+          <span class="status-badge success">清楚分工</span>
+        </div>
+        <div class="layer-inventory">
+          <div class="inventory-row">
+            <b><i>5</i> Controller</b>
+            <div><code>AuthController</code><code>PlayerController</code><code>StageController</code><code>TowerController</code><code>GameRecordController</code></div>
+            <p>接收 HTTP、執行 DTO 驗證、讀取 Authorization，將工作交給 Service。</p>
+          </div>
+          <div class="inventory-row">
+            <b><i>5</i> Service</b>
+            <div><code>AuthService</code><code>PlayerProgressService</code><code>StageService</code><code>TowerService</code><code>GameRecordService</code></div>
+            <p>保存登入、進度、購買、解鎖與排行榜等真正的後端規則。</p>
+          </div>
+          <div class="inventory-row">
+            <b><i>9</i> Repository</b>
+            <div><code>PlayerRepository</code><code>StageRepository</code><code>StagePathRepository</code><code>StageWaveRepository</code><code>EnemyRepository</code><code>TowerRepository</code><code>PlayerStageProgressRepository</code><code>PlayerTowerUnlockRepository</code><code>GameRecordRepository</code></div>
+            <p>繼承 JpaRepository，補充玩家、排行、歷史、解鎖與悲觀鎖查詢。</p>
+          </div>
+          <div class="inventory-row">
+            <b><i>9</i> Entity</b>
+            <div><code>Player</code><code>Stage</code><code>StagePath</code><code>StageWave</code><code>Enemy</code><code>Tower</code><code>PlayerStageProgress</code><code>PlayerTowerUnlock</code><code>GameRecord</code></div>
+            <p>對應九張業務資料表，定義欄位、限制與 JPA 關聯。</p>
+          </div>
+          <div class="inventory-row support-row">
+            <b><i>19</i> DTO</b><p>驗證 Request 並限制 Response 公開內容。</p>
+            <b><i>4</i> Mapper</b><p>Player、Stage、Tower、GameRecord 資料轉換。</p>
+            <b><i>4</i> Exception</b><p>統一回傳 400、401、404、409 與 500 中文錯誤。</p>
+            <b><i>1</i> Config</b><p>提供 BCrypt PasswordEncoder。</p>
+          </div>
+          <p class="inventory-note"><code>MachineRiftApplication</code> 是 Spring Boot 啟動入口；DTO 依 Auth、Player、Stage、Tower、GameRecord 與 Ranking 六類請求／回應資料分組。</p>
+        </div>
+      </article>
+
+      <article class="report-card accent-yellow">
+        <div class="card-title-row">
+          <div>
+            <p class="card-label">END-TO-END SEQUENCES</p>
+            <h3>兩條重要後端資料流</h3>
+          </div>
+          <span class="status-badge warning">Transaction Boundary</span>
+        </div>
+        <div class="sequence-grid">
+          <section class="sequence-card">
+            <h4>防禦塔永久購買</h4>
+            <ol>
+              <li><b>TowerController</b><span>接收 towerId 與登入 Token</span></li>
+              <li><b>AuthService</b><span>驗證 Token 並取得目前玩家</span></li>
+              <li><b>TowerService</b><span>確認塔存在並鎖定玩家資料</span></li>
+              <li><b>Repository</b><span>檢查重複購買與永久金幣</span></li>
+              <li><b>Transaction</b><span>扣款、新增解鎖關聯並回傳餘額</span></li>
+            </ol>
+          </section>
+          <section class="sequence-card">
+            <h4>遊戲結束與進度更新</h4>
+            <ol>
+              <li><b>GameRecordController</b><span>接收關卡、分數、勝敗與時間</span></li>
+              <li><b>GameRecordService</b><span>確認玩家已解鎖該關卡</span></li>
+              <li><b>GameRecordRepository</b><span>新增本局 GameRecord</span></li>
+              <li><b>PlayerProgressService</b><span>更新最佳分數、時間與完成次數</span></li>
+              <li><b>Transaction</b><span>勝利時發獎勵並解鎖下一關</span></li>
+            </ol>
+          </section>
+        </div>
+      </article>
+
+      <article class="report-card accent-red backend-guardrails">
+        <div>
+          <p class="card-label">SECURITY & ERROR BOUNDARY</p>
+          <h3>安全與例外處理</h3>
+        </div>
+        <div class="guardrail-grid">
+          <div><b>玩家身分</b><span>由 Bearer Token 決定，不接受前端指定其他 playerId。</span></div>
+          <div><b>敏感資料</b><span>密碼使用 BCrypt；資料庫只保存 Token 的 SHA-256 雜湊。</span></div>
+          <div><b>DTO 邊界</b><span>不將 passwordHash、sessionTokenHash 等 Entity 欄位回傳前端。</span></div>
+          <div><b>錯誤格式</b><span>GlobalExceptionHandler 統一中文訊息及 HTTP 狀態碼。</span></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="report-page" id="frontend" aria-labelledby="frontend-title" hidden>
+      <div class="page-heading">
+        <div>
+          <p class="section-index">PAGE 03 / FRONTEND & GAMEPLAY</p>
+          <h2 id="frontend-title">前端結構與遊戲核心</h2>
+          <p>原生 HTML、CSS 與 JavaScript 組成單頁式介面，Canvas 負責即時塔防戰場。</p>
+        </div>
+        <div class="page-number">03</div>
+      </div>
+
+      <div class="evidence-strip frontend-evidence" aria-label="前端成果摘要">
+        <div><strong>7</strong><span>主要畫面</span><small>Hash 路由切換</small></div>
+        <div><strong>5</strong><span>JavaScript 模組</span><small>依責任拆分</small></div>
+        <div><strong>6</strong><span>遊戲關卡</span><small>API 驅動內容</small></div>
+        <div><strong>Canvas</strong><span>即時戰場</span><small>原生 JavaScript</small></div>
+      </div>
+
+      <div class="frontend-overview-grid">
+        <article class="report-card compact-navigation-card accent-cyan">
+          <p class="card-label">SINGLE PAGE NAVIGATION</p>
+          <h3>玩家畫面導航</h3>
+          <div class="compact-navigation" aria-label="玩家畫面導航流程">
+            <div class="navigation-main-route">
+              <span><b>01</b>登入／建立帳號</span><i>登入成功 →</i><span class="lobby-route"><b>02</b>遊戲大廳</span>
+            </div>
+            <p>登入後由遊戲大廳選擇三條主要路線：</p>
+            <div class="compact-branches">
+              <div><b>A</b><strong>防禦塔工坊</strong><span>購買永久解鎖塔 → 返回大廳</span></div>
+              <div class="game-branch"><b>B</b><strong>開始遊戲</strong><span>選擇關卡 → 任務簡報 → Canvas 戰場</span></div>
+              <div><b>C</b><strong>戰績中心</strong><span>個人歷史／排行榜 → 返回大廳</span></div>
+            </div>
+          </div>
+          <p class="diagram-note">所有畫面位於 index.html，網址 Hash 保存目前頁面，支援上一頁與重新整理。</p>
+        </article>
+
+        <article class="report-card frontend-modules-card accent-purple">
+          <p class="card-label">FRONTEND FILE MAP</p>
+          <h3>七個前端檔案的責任</h3>
+          <div class="frontend-file-map">
+            <div><code>index.html</code><span>七個畫面與視窗結構</span></div>
+            <div><code>styles.css</code><span>戰術風格、HUD、響應式</span></div>
+            <div><code>core.js</code><span>API、Token、state、路由</span></div>
+            <div><code>views.js</code><span>大廳、工坊、選關、戰績</span></div>
+            <div class="primary-file"><code>game.js</code><span>遊戲迴圈、戰鬥、Canvas</span></div>
+            <div><code>story.js</code><span>任務與勝敗敘事</span></div>
+            <div><code>background.js</code><span>獨立背景動畫</span></div>
+          </div>
+        </article>
+      </div>
+
+      <article class="report-card compact-game-loop accent-yellow">
+        <div class="card-title-row">
+          <div>
+            <p class="card-label">GAME LOOP</p>
+            <h3>單場塔防六步流程</h3>
+          </div>
+          <span class="status-badge warning">Frontend Runtime</span>
+        </div>
+        <div class="game-loop-strip">
+          <div><b>1</b><strong>載入內容</strong><span>路線、波次、敵人、塔</span></div><i>→</i>
+          <div><b>2</b><strong>部署防禦塔</strong><span>位置、射程、局內金幣</span></div><i>→</i>
+          <div><b>3</b><strong>生成波次</strong><span>數量、間隔、生成距離</span></div><i>→</i>
+          <div><b>4</b><strong>執行戰鬥</strong><span>移動、瞄準、開火、擊殺</span></div><i>→</i>
+          <div><b>5</b><strong>判定結果</strong><span>全數清除／基地歸零</span></div><i>→</i>
+          <div><b>6</b><strong>送出戰績</strong><span>分數、結果、遊戲時間</span></div>
+        </div>
+      </article>
+
+      <div class="frontend-bottom-grid">
+        <article class="report-card feedback-overview accent-green">
+          <p class="card-label">BATTLEFIELD FEEDBACK</p>
+          <h3>戰場資訊與操作回饋</h3>
+          <div class="feedback-matrix">
+            <div><b>HUD</b><span>任務、波次、時間、金幣、基地血量</span></div>
+            <div><b>戰場</b><span>路線、可建造區、座標與方向提示</span></div>
+            <div><b>建塔</b><span>位置／射程預覽、連續放置、塔庫排序</span></div>
+            <div><b>攻擊</b><span>砲管追蹤、開火、命中及擊殺金幣</span></div>
+            <div><b>敵人</b><span>固定血條、生成間距、速度與生命</span></div>
+            <div><b>基地</b><span>受傷震動、低血量紅色警示</span></div>
+          </div>
+        </article>
+
+        <article class="report-card runtime-boundary accent-blue">
+          <p class="card-label">RUNTIME DATA BOUNDARY</p>
+          <h3>前端暫存與後端永久資料</h3>
+          <div class="runtime-split">
+            <div><b>只存在本局</b><span>敵人與塔、子彈、局內金幣、基地生命、波次、分數、時間與動畫效果。</span></div>
+            <i>遊戲結束<br>POST</i>
+            <div><b>送往後端保存</b><span>stageId、score、WIN／LOSE、playTime；玩家身分由 Token 決定。</span></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="report-page" id="data" aria-labelledby="data-title" hidden>
+      <div class="page-heading">
+        <div>
+          <p class="section-index">PAGE 04 / DATABASE · API · TEST</p>
+          <h2 id="data-title">資料庫、API 與測試成果</h2>
+          <p>九張資料表保存內容與玩家進度，十一支 API 串接核心流程，三十九項測試保護後端規則。</p>
+        </div>
+        <div class="page-number">04</div>
+      </div>
+
+      <div class="evidence-strip" aria-label="專案資料成果摘要">
+        <div><strong>9</strong><span>業務資料表</span><small>結構已收斂</small></div>
+        <div><strong>11</strong><span>REST API</span><small>涵蓋核心流程</small></div>
+        <div><strong>39</strong><span>自動化測試</span><small>核心規則驗證</small></div>
+        <div><strong>V21</strong><span>Flyway 版本</span><small>可重建資料庫</small></div>
+      </div>
+
+      <div class="data-overview-grid">
+        <article class="report-card database-overview accent-yellow">
+          <div class="card-title-row">
+            <div>
+              <p class="card-label">DATABASE RELATIONSHIP</p>
+              <h3>資料表關聯全貌</h3>
+            </div>
+            <span class="status-badge warning">9 Tables</span>
+          </div>
+          <div class="compact-erd">
+            <div class="erd-source"><strong>player</strong><span>帳號、金幣、Token</span></div>
+            <div class="erd-relations">
+              <div><i>1 ─ N</i><strong>player_stage_progress</strong><span>解鎖、最佳紀錄、完成次數</span><i>N ─ 1</i><b>stage</b></div>
+              <div><i>1 ─ N</i><strong>player_tower_unlock</strong><span>永久購買關聯</span><i>N ─ 1</i><b>tower</b></div>
+              <div><i>1 ─ N</i><strong>game_record</strong><span>勝敗、分數、時間、日期</span><i>N ─ 1</i><b>stage</b></div>
+            </div>
+          </div>
+          <div class="stage-content-map">
+            <b>stage</b><i>1 ─ N</i><span>stage_path</span>
+            <b>stage</b><i>1 ─ N</i><span>stage_wave</span><i>N ─ 1</i><span>enemy</span>
+          </div>
+          <p class="diagram-note">固定內容 5 張表、玩家帳號 1 張表、永久進度 2 張表、每局歷史 1 張表。</p>
+        </article>
+
+        <article class="report-card api-overview accent-blue">
+          <div class="card-title-row">
+            <div>
+              <p class="card-label">API COVERAGE</p>
+              <h3>五組 API 模組</h3>
+            </div>
+            <button class="function-overview-button" id="open-api-overview" type="button">查看 11 支 API</button>
+          </div>
+          <div class="api-domain-summary">
+            <div><b>4</b><strong>帳號登入</strong><span>register、login、me、logout</span></div>
+            <div><b>1</b><strong>玩家進度</strong><span>目前玩家的永久進度</span></div>
+            <div><b>1</b><strong>關卡內容</strong><span>路徑、波次與敵人資料</span></div>
+            <div><b>2</b><strong>防禦塔</strong><span>塔資料與永久購買</span></div>
+            <div><b>3</b><strong>戰績中心</strong><span>保存、歷史與排行榜</span></div>
+          </div>
+          <div class="api-contract-mini">
+            <code>{ success, message, data }</code>
+            <span>登入 API 使用 <b>Authorization: Bearer Token</b></span>
+          </div>
+        </article>
+      </div>
+
+      <div class="verification-overview-grid">
+        <article class="report-card migration-overview accent-purple">
+          <p class="card-label">MIGRATION EVOLUTION</p>
+          <h3>Flyway 資料庫演進</h3>
+          <div class="migration-track">
+            <div><b>V1</b><span>核心 Schema</span></div><i>→</i>
+            <div><b>V3</b><span>路線與波次</span></div><i>→</i>
+            <div><b>V7</b><span>帳號與登入</span></div><i>→</i>
+            <div><b>V14</b><span>MVP 結構收斂</span></div><i>→</i>
+            <div><b>V21</b><span>難度與速度平衡</span></div>
+          </div>
+          <p>空白 MySQL 可依 V1～V21 重建結構與種子資料；下一個版本從 V22 開始。</p>
+        </article>
+
+        <article class="report-card test-overview accent-green">
+          <div class="card-title-row">
+            <div>
+              <p class="card-label">TEST COVERAGE MATRIX</p>
+              <h3>39 項測試覆蓋六個層級</h3>
+            </div>
+            <span class="test-status">✓ VERIFIED</span>
+          </div>
+          <div class="coverage-matrix">
+            <div><b>✓</b><strong>Application</strong><span>啟動、Schema、種子內容、OpenAPI</span></div>
+            <div><b>✓</b><strong>Migration</strong><span>V14～V21 結構與數值演進</span></div>
+            <div><b>✓</b><strong>Controller</strong><span>Token、DTO、進度與排行榜</span></div>
+            <div><b>✓</b><strong>Service</strong><span>戰績、解鎖、購買與金幣</span></div>
+            <div><b>✓</b><strong>Repository</strong><span>排行、日期排序與關聯載入</span></div>
+            <div><b>✓</b><strong>Exception</strong><span>中文錯誤及 null 訊息防護</span></div>
+          </div>
+        </article>
+      </div>
+
+      <article class="report-card data-conclusion accent-cyan">
+        <div><b>資料保護</b><span>BCrypt 密碼、SHA-256 Token 雜湊、DTO 排除敏感欄位</span></div>
+        <div><b>一致回應</b><span><code>{ success, message, data }</code> 與中文錯誤格式</span></div>
+        <div><b>MVP 成果</b><span>登入、操作、存檔與成果展示流程已完整串接</span></div>
+      </article>
+    </section>
+  </main>
+
+  <dialog class="function-dialog" id="function-overview-dialog" aria-labelledby="function-dialog-title">
+    <div class="function-dialog-header">
+      <div>
+        <p class="card-label">BACKEND FUNCTION INDEX</p>
+        <h2 id="function-dialog-title">後端 Function 全覽</h2>
+        <p>依功能模組整理明確寫在程式中的方法；不重複列出 Lombok 產生的方法及 JpaRepository 基本 CRUD。</p>
+      </div>
+      <button class="function-dialog-close" type="button" data-close-function-dialog aria-label="關閉 Function 全覽">×</button>
+    </div>
+
+    <div class="function-dialog-body">
+      <section class="function-group auth-functions">
+        <div class="function-group-title"><b>01</b><div><h3>會員與登入</h3><span>AuthController / AuthService</span></div></div>
+        <div class="function-class">
+          <strong>AuthController</strong>
+          <ul class="function-list">
+            <li><code>register()</code><span>接收註冊資料並建立玩家</span></li>
+            <li><code>login()</code><span>驗證帳密並回傳 Token</span></li>
+            <li><code>me()</code><span>取得目前登入玩家</span></li>
+            <li><code>logout()</code><span>使目前 Token 失效</span></li>
+          </ul>
+        </div>
+        <div class="function-class">
+          <strong>AuthService</strong>
+          <ul class="function-list">
+            <li><code>register()</code><span>檢查重複、加密密碼、初始化玩家</span></li>
+            <li><code>login()</code><span>比對 BCrypt 密碼</span></li>
+            <li><code>requirePlayer()</code><span>驗證 Bearer Token 與到期時間</span></li>
+            <li><code>logout()</code><span>清除 Token 雜湊與到期時間</span></li>
+            <li><code>createSession()</code><span>產生 30 天登入 Session</span></li>
+            <li><code>extractBearerToken()</code><span>解析 Authorization Header</span></li>
+            <li><code>normalizeUsername()</code><span>帳號去空白並轉小寫</span></li>
+            <li><code>hashToken()</code><span>以 SHA-256 保存 Token 雜湊</span></li>
+          </ul>
+        </div>
+        <div class="function-class">
+          <strong>PlayerRepository 自訂查詢</strong>
+          <ul class="function-list">
+            <li><code>findByUsername()</code><span>依登入帳號尋找玩家</span></li>
+            <li><code>findBySessionTokenHash()</code><span>依 Token 雜湊尋找玩家</span></li>
+            <li><code>existsByUsername()</code><span>檢查登入帳號重複</span></li>
+            <li><code>existsByPlayerNameIgnoreCase()</code><span>不分大小寫檢查玩家名稱</span></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="function-group progress-functions">
+        <div class="function-group-title"><b>02</b><div><h3>玩家進度</h3><span>PlayerController / PlayerProgressService</span></div></div>
+        <div class="function-class">
+          <strong>PlayerController</strong>
+          <ul class="function-list">
+            <li><code>getPlayerProgress()</code><span>回傳登入玩家完整進度</span></li>
+          </ul>
+        </div>
+        <div class="function-class">
+          <strong>PlayerProgressService</strong>
+          <ul class="function-list">
+            <li><code>initializePlayer()</code><span>補齊預設值與起始解鎖</span></li>
+            <li><code>getProgress()</code><span>組合金幣、關卡與塔解鎖</span></li>
+            <li><code>isStageUnlocked()</code><span>確認玩家可進入關卡</span></li>
+            <li><code>recordGameResult()</code><span>更新最佳戰績、獎勵與完成次數</span></li>
+            <li><code>isBetterResult()</code><span>比較高分與同分較短時間</span></li>
+            <li><code>unlockNextStage()</code><span>勝利後解鎖下一關</span></li>
+            <li><code>findFirstPlayableStage()</code><span>尋找第一個完整可玩關卡</span></li>
+            <li><code>unlockStage()</code><span>建立或更新關卡解鎖</span></li>
+            <li><code>unlockTower()</code><span>建立玩家起始塔解鎖</span></li>
+          </ul>
+        </div>
+        <div class="function-class">
+          <strong>進度 Repository 自訂查詢</strong>
+          <ul class="function-list">
+            <li><code>findAllByPlayerPlayerIdOrderByStageStageIdAsc()</code><span>取得玩家全部關卡進度</span></li>
+            <li><code>findByPlayerPlayerIdAndStageStageId()</code><span>取得玩家單關進度</span></li>
+            <li><code>existsByPlayerPlayerIdAndStageStageIdAndUnlockedTrue()</code><span>確認關卡已解鎖</span></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="function-group stage-functions">
+        <div class="function-group-title"><b>03</b><div><h3>關卡內容</h3><span>StageController / StageService / StageMapper</span></div></div>
+        <div class="function-class">
+          <strong>Stage 模組</strong>
+          <ul class="function-list">
+            <li><code>StageController.getAllStages()</code><span>提供關卡內容 API</span></li>
+            <li><code>StageService.getAllStages()</code><span>查詢並轉換全部關卡</span></li>
+            <li><code>StageMapper.toResponseDto()</code><span>組合路線、波次與敵人 DTO</span></li>
+          </ul>
+        </div>
+        <div class="function-class">
+          <strong>StageRepository 自訂查詢</strong>
+          <ul class="function-list">
+            <li><code>findFirstByOrderByStageIdAsc()</code><span>取得第一關</span></li>
+            <li><code>findFirstByStageIdGreaterThanOrderByStageIdAsc()</code><span>取得下一關</span></li>
+            <li><code>findAllByOrderByStageIdAsc()</code><span>依 ID 取得全部關卡</span></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="function-group tower-functions">
+        <div class="function-group-title"><b>04</b><div><h3>防禦塔工坊</h3><span>TowerController / TowerService / TowerMapper</span></div></div>
+        <div class="function-class">
+          <strong>Tower 模組</strong>
+          <ul class="function-list">
+            <li><code>TowerController.getAllTowers()</code><span>提供全部塔資料</span></li>
+            <li><code>TowerController.unlockTower()</code><span>接收永久購買請求</span></li>
+            <li><code>TowerService.getAllTowers()</code><span>依造價與 ID 排序</span></li>
+            <li><code>TowerService.unlockTower()</code><span>鎖定玩家、扣款並建立解鎖</span></li>
+            <li><code>TowerMapper.toResponseDto()</code><span>塔 Entity 轉成公開 DTO</span></li>
+          </ul>
+        </div>
+        <div class="function-class">
+          <strong>購買相關查詢</strong>
+          <ul class="function-list">
+            <li><code>findByIdForUpdate()</code><span>悲觀鎖讀取玩家</span></li>
+            <li><code>findAllByOrderByCostAscTowerIdAsc()</code><span>塔排序查詢</span></li>
+            <li><code>existsByPlayerPlayerIdAndTowerTowerId()</code><span>檢查重複購買</span></li>
+            <li><code>findAllByPlayerPlayerIdOrderByTowerCostAscTowerTowerIdAsc()</code><span>取得玩家已解鎖塔</span></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="function-group record-functions">
+        <div class="function-group-title"><b>05</b><div><h3>戰績與排行榜</h3><span>GameRecordController / Service / Mapper</span></div></div>
+        <div class="function-class">
+          <strong>Controller / Service</strong>
+          <ul class="function-list">
+            <li><code>saveGameRecord()</code><span>保存登入玩家的單局結果</span></li>
+            <li><code>getMyGameRecords()</code><span>個人最近 20 筆歷史 API</span></li>
+            <li><code>getPlayerHistory()</code><span>查詢並轉換玩家歷史</span></li>
+            <li><code>getRankings()</code><span>產生全體或單關前十名</span></li>
+          </ul>
+        </div>
+        <div class="function-class">
+          <strong>GameRecordMapper / Repository</strong>
+          <ul class="function-list">
+            <li><code>toResponseDto()</code><span>戰績保存結果 DTO</span></li>
+            <li><code>toHistoryResponseDto()</code><span>個人歷史 DTO</span></li>
+            <li><code>toEntity()</code><span>Request、玩家與關卡組成 Entity</span></li>
+            <li><code>findAllByOrderByScoreDescPlayTimeAscRecordIdAsc()</code><span>全體排行榜排序</span></li>
+            <li><code>findAllByStageOrderByScoreDescPlayTimeAscRecordIdAsc()</code><span>單關排行榜排序</span></li>
+            <li><code>findTop20ByPlayerOrderByCreatedAtDescRecordIdDesc()</code><span>個人最近戰績</span></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="function-group support-functions">
+        <div class="function-group-title"><b>＋</b><div><h3>共用支援</h3><span>Mapper / Config / Repository inheritance</span></div></div>
+        <div class="function-class">
+          <strong>共用明確方法</strong>
+          <ul class="function-list">
+            <li><code>PlayerMapper.toResponseDto()</code><span>排除玩家敏感欄位</span></li>
+            <li><code>PasswordConfig.passwordEncoder()</code><span>註冊 BCrypt Bean</span></li>
+            <li><code>ApiResponse.success()</code><span>建立統一成功回應</span></li>
+            <li><code>ApiResponse.failure()</code><span>建立統一失敗回應</span></li>
+          </ul>
+        </div>
+        <div class="function-class">
+          <strong>GlobalExceptionHandler</strong>
+          <ul class="function-list">
+            <li><code>handleValidationException()</code><span>處理 DTO 欄位驗證錯誤</span></li>
+            <li><code>handleResourceNotFound()</code><span>回傳 404 資料不存在</span></li>
+            <li><code>handleNoResourceFound()</code><span>回傳 404 API 不存在</span></li>
+            <li><code>handleResourceConflict()</code><span>回傳 409 資料衝突</span></li>
+            <li><code>handleAuthentication()</code><span>回傳 401 登入驗證錯誤</span></li>
+            <li><code>handleGeneralException()</code><span>記錄錯誤並回傳中文 500</span></li>
+          </ul>
+        </div>
+        <p class="function-note">未逐一列出：Lombok 產生的 Getter、Setter、Builder、建構子，以及 JpaRepository 繼承的 save、findById、findAll、delete、existsById 等基本 CRUD。EnemyRepository、StagePathRepository、StageWaveRepository 目前只使用這些繼承方法。</p>
+      </section>
+    </div>
+  </dialog>
+
+  <dialog class="function-dialog api-dialog" id="api-overview-dialog" aria-labelledby="api-dialog-title">
+    <div class="function-dialog-header">
+      <div>
+        <p class="card-label">REST API INDEX</p>
+        <h2 id="api-dialog-title">11 支 API 完整清單</h2>
+        <p>依功能模組列出 Method、Path、登入需求與用途，所有回應使用統一 ApiResponse 格式。</p>
+      </div>
+      <button class="function-dialog-close" type="button" data-close-api-dialog aria-label="關閉 API 全覽">×</button>
+    </div>
+    <div class="api-dialog-body">
+      <section class="api-detail-group">
+        <h3><b>4</b>會員與登入</h3>
+        <div class="api-detail-list">
+          <div><em class="post">POST</em><code>/api/auth/register</code><span>公開</span><p>建立帳號並直接取得登入 Token</p></div>
+          <div><em class="post">POST</em><code>/api/auth/login</code><span>公開</span><p>驗證帳號與密碼</p></div>
+          <div><em class="get">GET</em><code>/api/auth/me</code><span>Token</span><p>恢復目前登入玩家</p></div>
+          <div><em class="post">POST</em><code>/api/auth/logout</code><span>Token</span><p>撤銷目前登入 Session</p></div>
+        </div>
+      </section>
+      <section class="api-detail-group">
+        <h3><b>1</b>玩家進度</h3>
+        <div class="api-detail-list">
+          <div><em class="get">GET</em><code>/api/players/me/progress</code><span>Token</span><p>金幣、關卡進度與已解鎖塔</p></div>
+        </div>
+      </section>
+      <section class="api-detail-group">
+        <h3><b>1</b>關卡內容</h3>
+        <div class="api-detail-list">
+          <div><em class="get">GET</em><code>/api/stages</code><span>公開</span><p>關卡、路徑、波次與敵人</p></div>
+        </div>
+      </section>
+      <section class="api-detail-group">
+        <h3><b>2</b>防禦塔</h3>
+        <div class="api-detail-list">
+          <div><em class="get">GET</em><code>/api/towers</code><span>公開</span><p>全部防禦塔數值與價格</p></div>
+          <div><em class="post">POST</em><code>/api/towers/{towerId}/unlock</code><span>Token</span><p>使用永久金幣購買塔</p></div>
+        </div>
+      </section>
+      <section class="api-detail-group">
+        <h3><b>3</b>戰績中心</h3>
+        <div class="api-detail-list">
+          <div><em class="post">POST</em><code>/api/game-records</code><span>Token</span><p>保存登入玩家的遊戲結果</p></div>
+          <div><em class="get">GET</em><code>/api/game-records/me</code><span>Token</span><p>最近 20 筆個人歷史</p></div>
+          <div><em class="get">GET</em><code>/api/rankings?stageId={id}</code><span>Token</span><p>全體或指定關卡前十名</p></div>
+        </div>
+      </section>
+    </div>
+  </dialog>
+
+  <footer class="report-footer">
+    <span>Machine Rift · Project Architecture Report</span>
+    <span id="page-indicator">PAGE 01 / 04</span>
+  </footer>
+
+  <script src="report.js"></script>
+</body>
+</html>

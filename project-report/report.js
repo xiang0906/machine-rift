@@ -31,9 +31,10 @@ function showReportPage(pageId, { updateHistory = true } = {}) {
   });
 
   const pageIndex = pages.findIndex(page => page.id === nextPage) + 1;
-  indicator.textContent = `PAGE ${String(pageIndex).padStart(2, '0')} / 04`;
+  const pageTotal = String(pages.length).padStart(2, '0');
+  indicator.textContent = `PAGE ${String(pageIndex).padStart(2, '0')} / ${pageTotal}`;
   if (railIndicator) {
-    railIndicator.textContent = `${String(pageIndex).padStart(2, '0')} / 04`;
+    railIndicator.textContent = `${String(pageIndex).padStart(2, '0')} / ${pageTotal}`;
   }
   document.title = `${tabs[pageIndex - 1].textContent.trim()}｜Machine Rift 專案報告`;
 

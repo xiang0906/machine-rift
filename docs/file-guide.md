@@ -1,6 +1,6 @@
 # Machine Rift 專案檔案導覽
 
-> 更新日期：2026-08-26
+> 更新日期：2026-09-02
 > 對應版本：Spring Boot 3.5.16、Flyway V1～V21、39 項自動測試
 
 這份文件說明每個檔案負責什麼、功能如何跨檔案運作，以及修改需求時應先找哪裡。
@@ -17,7 +17,7 @@
 | `README.md` | GitHub 專案首頁；提供功能摘要、環境、啟動、API 與 Demo 說明。GitHub Pages 根網址會將它轉成網頁。 |
 | `docs/project-status.md` | 最新系統現況：功能、架構、資料庫、API、測試及限制。 |
 | `docs/file-guide.md` | 本文件；程式模組、檔案與修改入口導覽。 |
-| `project-report/index.html` | 四頁互動式專案報告入口，不參與 Spring Boot 執行。 |
+| `project-report/index.html` | 五頁互動式專案報告入口，不參與 Spring Boot 執行。 |
 | `project-report/report.css` | 報告專用版面、卡片、圖表與響應式樣式。 |
 | `project-report/report.js` | 報告頁籤切換及互動。 |
 | `pom.xml` | Maven 設定與 Spring Boot、JPA、Flyway、MySQL、Swagger、H2、測試依賴。 |

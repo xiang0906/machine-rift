@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Machine Rift 機械裂隙專案四頁式網頁報告">
+  <meta name="description" content="Machine Rift 機械裂隙專案五頁式網頁報告">
   <title>Machine Rift｜專案架構報告</title>
-  <link rel="stylesheet" href="report.css?v=20260902-2">
+  <link rel="stylesheet" href="report.css?v=20260902-3">
 </head>
 <body>
   <aside class="report-header" aria-label="專案報告導覽">
@@ -43,13 +43,16 @@
         <span>03</span>前端與遊戲核心
       </button>
       <button class="page-tab" type="button" data-page="data" aria-selected="false">
-        <span>04</span>資料庫・API・測試
+        <span>04</span>資料庫與 API
+      </button>
+      <button class="page-tab" type="button" data-page="results" aria-selected="false">
+        <span>05</span>測試成果與結論
       </button>
     </nav>
 
     <div class="rail-status" aria-label="報告狀態">
       <div><span>STATUS</span><b>READY FOR DEMO</b></div>
-      <div><span>SECTION</span><b id="rail-page-indicator">01 / 04</b></div>
+      <div><span>SECTION</span><b id="rail-page-indicator">01 / 05</b></div>
       <small>使用方向鍵可切換章節</small>
     </div>
   </aside>
@@ -466,9 +469,9 @@
     <section class="report-page" id="data" aria-labelledby="data-title" hidden>
       <div class="page-heading">
         <div>
-          <p class="section-index">PAGE 04 / DATABASE · API · TEST</p>
-          <h2 id="data-title">資料庫、API 與測試成果</h2>
-          <p>九張資料表保存內容與玩家進度，十一支 API 串接核心流程，三十九項測試保護後端規則。</p>
+          <p class="section-index">PAGE 04 / DATABASE · API</p>
+          <h2 id="data-title">資料庫與 API</h2>
+          <p>九張資料表保存遊戲內容與玩家進度，十一支 API 將前端操作串接至後端規則。</p>
         </div>
         <div class="page-number">04</div>
       </div>
@@ -476,8 +479,8 @@
       <div class="evidence-strip" aria-label="專案資料成果摘要">
         <div><strong>9</strong><span>業務資料表</span><small>結構已收斂</small></div>
         <div><strong>11</strong><span>REST API</span><small>涵蓋核心流程</small></div>
-        <div><strong>39</strong><span>自動化測試</span><small>核心規則驗證</small></div>
         <div><strong>V21</strong><span>Flyway 版本</span><small>可重建資料庫</small></div>
+        <div><strong>5</strong><span>內容資料表</span><small>關卡、路線與戰鬥數值</small></div>
       </div>
 
       <div class="data-overview-grid">
@@ -539,30 +542,80 @@
           </div>
           <p>空白 MySQL 可依 V1～V21 重建結構與種子資料；下一個版本從 V22 開始。</p>
         </article>
-
-        <article class="report-card test-overview accent-green">
-          <div class="card-title-row">
-            <div>
-              <p class="card-label">TEST COVERAGE MATRIX</p>
-              <h3>39 項測試覆蓋六個層級</h3>
-            </div>
-            <span class="test-status">✓ VERIFIED</span>
-          </div>
-          <div class="coverage-matrix">
-            <div><b>✓</b><strong>Application</strong><span>啟動、Schema、種子內容、OpenAPI</span></div>
-            <div><b>✓</b><strong>Migration</strong><span>V14～V21 結構與數值演進</span></div>
-            <div><b>✓</b><strong>Controller</strong><span>Token、DTO、進度與排行榜</span></div>
-            <div><b>✓</b><strong>Service</strong><span>戰績、解鎖、購買與金幣</span></div>
-            <div><b>✓</b><strong>Repository</strong><span>排行、日期排序與關聯載入</span></div>
-            <div><b>✓</b><strong>Exception</strong><span>中文錯誤及 null 訊息防護</span></div>
-          </div>
-        </article>
       </div>
 
       <article class="report-card data-conclusion accent-cyan">
         <div><b>資料保護</b><span>BCrypt 密碼、SHA-256 Token 雜湊、DTO 排除敏感欄位</span></div>
         <div><b>一致回應</b><span><code>{ success, message, data }</code> 與中文錯誤格式</span></div>
-        <div><b>MVP 成果</b><span>登入、操作、存檔與成果展示流程已完整串接</span></div>
+        <div><b>版本管理</b><span>Flyway 依序執行 V1～V21，既有 migration 不回頭修改</span></div>
+      </article>
+    </section>
+
+    <section class="report-page" id="results" aria-labelledby="results-title" hidden>
+      <div class="page-heading">
+        <div>
+          <p class="section-index">PAGE 05 / VERIFICATION · CONCLUSION</p>
+          <h2 id="results-title">測試成果與專案結論</h2>
+          <p>三十九項自動化測試驗證資料庫演進、API 契約與核心規則，讓作品能穩定完成課程展示。</p>
+        </div>
+        <div class="page-number">05</div>
+      </div>
+
+      <div class="evidence-strip results-evidence" aria-label="測試成果摘要">
+        <div><strong>39</strong><span>自動化測試</span><small>全部執行完成</small></div>
+        <div><strong>0</strong><span>Failures</span><small>功能驗證通過</small></div>
+        <div><strong>0</strong><span>Errors</span><small>執行過程正常</small></div>
+        <div><strong>8</strong><span>測試類別</span><small>涵蓋六個層級</small></div>
+      </div>
+
+      <article class="report-card test-overview results-test-card accent-green">
+        <div class="card-title-row">
+          <div>
+            <p class="card-label">TEST COVERAGE MATRIX</p>
+            <h3>39 項測試覆蓋六個系統層級</h3>
+          </div>
+          <span class="test-status">✓ BUILD SUCCESS</span>
+        </div>
+        <div class="coverage-matrix results-coverage">
+          <div><b>7</b><strong>Application</strong><span>啟動、9 張表、種子內容、關卡 API、登入恢復與 OpenAPI</span></div>
+          <div><b>8</b><strong>Migration</strong><span>V14～V21 結構搬移、欄位移除與數值平衡</span></div>
+          <div><b>11</b><strong>Controller</strong><span>Token 身分、DTO 中文驗證、私人進度、歷史與排行榜</span></div>
+          <div><b>11</b><strong>Service</strong><span>戰績、鎖關、最佳成績、永久購塔與金幣交易</span></div>
+          <div><b>1</b><strong>Repository</strong><span>排行榜依分數降冪及同分時間升冪排序</span></div>
+          <div><b>1</b><strong>Exception</strong><span>驗證訊息為空時仍回傳安全的中文錯誤</span></div>
+        </div>
+      </article>
+
+      <div class="results-detail-grid">
+        <article class="report-card test-breakdown accent-blue">
+          <p class="card-label">VERIFIED USER JOURNEY</p>
+          <h3>核心流程已被測試保護</h3>
+          <ol>
+            <li><b>登入</b><span>建立帳號、驗證密碼並由 Token 恢復玩家身分</span></li>
+            <li><b>操作</b><span>取得關卡與塔資料，檢查關卡是否已解鎖</span></li>
+            <li><b>存檔</b><span>保存勝敗、分數與時間，更新永久金幣及最佳戰績</span></li>
+            <li><b>展示</b><span>讀取個人歷史與後端彙整的前十名排行榜</span></li>
+          </ol>
+        </article>
+
+        <article class="report-card project-boundary accent-yellow">
+          <p class="card-label">MVP BOUNDARY</p>
+          <h3>完成範圍與保留界線</h3>
+          <div class="boundary-list">
+            <div><b>已完成</b><span>單人塔防、登入、永久進度、工坊、六關與戰績中心</span></div>
+            <div><b>刻意收斂</b><span>九張業務表與十一支 API，只保留展示流程需要的功能</span></div>
+            <div><b>後續發展</b><span>進階塔能力、敵人特性、完整 Security 與大型排行最佳化</span></div>
+          </div>
+        </article>
+      </div>
+
+      <article class="report-card conclusion-card results-conclusion">
+        <div>
+          <p class="card-label">FINAL MVP STATEMENT</p>
+          <h3>在有限時數內，完成能登入、能操作、能存資料、能展示的完整作品</h3>
+          <p>Machine Rift 已串接前端遊戲、Spring Boot API 與 MySQL 永久資料，並透過 Flyway 與自動化測試保護核心流程。目前適合作為課程最終成果進行 Demo 與架構說明。</p>
+        </div>
+        <div class="completion-ring"><strong>MVP</strong><span>READY TO DEMO</span></div>
       </article>
     </section>
   </main>
@@ -790,9 +843,9 @@
 
   <footer class="report-footer">
     <span>Machine Rift · Project Architecture Report</span>
-    <span id="page-indicator">PAGE 01 / 04</span>
+    <span id="page-indicator">PAGE 01 / 05</span>
   </footer>
 
-  <script src="report.js?v=20260902-1"></script>
+  <script src="report.js?v=20260902-2"></script>
 </body>
 </html>

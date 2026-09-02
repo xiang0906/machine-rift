@@ -1,6 +1,6 @@
 # Machine Rift 專案現況
 
-> 更新日期：2026-08-26
+> 更新日期：2026-09-02
 > 階段：功能完成、進入課程 MVP 收尾與展示階段
 
 ## 1. 專案定位
@@ -21,7 +21,7 @@ Flyway 管理資料庫結構與種子資料版本。
   → 查詢個人歷史與排行榜
 ```
 
-專案另有四頁式互動報告 `project-report/index.html`，部署後可由
+專案另有五頁式互動報告 `project-report/index.html`，部署後可由
 `https://xiang0906.github.io/machine-rift/project-report/` 瀏覽。報告與遊戲程式分開，不參與 Spring Boot 執行。
 
 ## 2. 技術與執行環境
@@ -246,7 +246,7 @@ Maven 測試指令：`./mvnw.cmd test`
 
 目前已符合「能登入、能操作、能存資料、能展示」的課程 MVP 目標，建議收尾聚焦：
 
-1. 使用 `project-report/` 進行四頁式系統報告。
+1. 使用 `project-report/` 進行五頁式系統報告。
 2. 準備 3～5 分鐘 Demo：註冊、工坊購塔、進入關卡、完成戰鬥、查看戰績。
 3. 展示 MySQL 的 9 張業務表、Flyway V1～V21 與 Swagger 11 支 API。
 4. 展示 `mvnw.cmd test` 的 39 項自動測試結果。

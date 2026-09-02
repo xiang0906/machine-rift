@@ -3613,14 +3613,41 @@ body {
   transform: rotate(90deg);
 }
 
-#data > .data-overview-grid {
+#data > .data-overview-grid,
+#data > .verification-overview-grid {
+  display: contents;
+}
+
+#data .database-overview {
+  grid-column: span 8;
+}
+
+#data .api-overview {
+  grid-column: span 4;
+}
+
+#data .migration-overview {
+  grid-column: span 5;
+}
+
+#data .test-overview {
   grid-column: span 7;
 }
 
-#data > .verification-overview-grid {
-  grid-column: span 5;
+#data .database-overview,
+#data .api-overview,
+#data .migration-overview,
+#data .test-overview {
   align-self: stretch;
-  grid-template-columns: 1fr;
+  margin-bottom: 0;
+}
+
+#data .compact-erd {
+  grid-template-columns: 175px minmax(0, 1fr);
+}
+
+#data .api-domain-summary > div {
+  grid-template-columns: 30px 100px minmax(0, 1fr);
 }
 
 .report-footer {
@@ -3651,6 +3678,15 @@ body {
   #frontend > .compact-game-loop,
   #data > .data-overview-grid,
   #data > .verification-overview-grid { grid-column: 1 / -1; }
+  #data > .data-overview-grid,
+  #data > .verification-overview-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  #data .database-overview,
+  #data .api-overview,
+  #data .migration-overview,
+  #data .test-overview { grid-column: 1 / -1; }
 }
 
 @media (max-width: 820px) {

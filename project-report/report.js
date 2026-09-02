@@ -1,6 +1,7 @@
 const tabs = [...document.querySelectorAll('.page-tab')];
 const pages = [...document.querySelectorAll('.report-page')];
 const indicator = document.querySelector('#page-indicator');
+const railIndicator = document.querySelector('#rail-page-indicator');
 const validPages = new Set(pages.map(page => page.id));
 const functionDialog = document.querySelector('#function-overview-dialog');
 const openFunctionDialogButton = document.querySelector('#open-function-overview');
@@ -31,6 +32,9 @@ function showReportPage(pageId, { updateHistory = true } = {}) {
 
   const pageIndex = pages.findIndex(page => page.id === nextPage) + 1;
   indicator.textContent = `PAGE ${String(pageIndex).padStart(2, '0')} / 04`;
+  if (railIndicator) {
+    railIndicator.textContent = `${String(pageIndex).padStart(2, '0')} / 04`;
+  }
   document.title = `${tabs[pageIndex - 1].textContent.trim()}｜Machine Rift 專案報告`;
 
   if (updateHistory && window.location.hash !== `#${nextPage}`) {

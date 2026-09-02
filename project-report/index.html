@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="report.css">
 </head>
 <body>
-  <header class="report-header">
+  <aside class="report-header" aria-label="專案報告導覽">
     <div class="header-grid">
       <div class="brand-block">
         <div class="brand-mark" aria-hidden="true">MR</div>
@@ -27,6 +27,11 @@
       </div>
     </div>
 
+    <div class="rail-brief">
+      <span>PROJECT DOSSIER</span>
+      <p>裂隙防衛系統／課程 MVP 最終技術檔案</p>
+    </div>
+
     <nav class="page-tabs" aria-label="報告頁面">
       <button class="page-tab is-active" type="button" data-page="overview" aria-selected="true">
         <span>01</span>總覽與核心流程
@@ -41,7 +46,13 @@
         <span>04</span>資料庫・API・測試
       </button>
     </nav>
-  </header>
+
+    <div class="rail-status" aria-label="報告狀態">
+      <div><span>STATUS</span><b>READY FOR DEMO</b></div>
+      <div><span>SECTION</span><b id="rail-page-indicator">01 / 04</b></div>
+      <small>使用方向鍵可切換章節</small>
+    </div>
+  </aside>
 
   <main class="report-shell">
     <section class="report-page is-active" id="overview" aria-labelledby="overview-title">
